@@ -1,0 +1,10 @@
+# AP-NET core dependencies (development machine and Raspberry Pi alike)
+Pillow>=10.0.0
+
+# Everything else is optional and degrades gracefully:
+#   onnxruntime        real YOLO inference          -> see requirements-pi.txt
+#   opencv-python      USB webcam + preview window
+#   picamera2          Pi Camera Module             -> apt, not pip
+#   gpiozero / lgpio   PIR sensor and power latch   -> apt, not pip
+#
+# Check what this machine has:  python3 edge_node/detector.py --check

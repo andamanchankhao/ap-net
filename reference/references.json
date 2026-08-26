@@ -1,0 +1,347 @@
+[
+  {
+    "id": 1,
+    "title": "WildLife AI - Hackster.io",
+    "url": "https://www.hackster.io/gavindu911/wildlife-ai-f8e87b"
+  },
+  {
+    "id": 2,
+    "title": "ESP32-CAM PIR Motion Detector with Photo Capture - Random Nerd Tutorials",
+    "url": "https://randomnerdtutorials.com/esp32-cam-pir-motion-detector-photo-capture/"
+  },
+  {
+    "id": 3,
+    "title": "Fauna-Flash - Hackster.io",
+    "url": "https://www.hackster.io/pasu_labs/fauna-flash-cb83e7"
+  },
+  {
+    "id": 4,
+    "title": "YOLO26 on Raspberry Pi: Setup & Benchmarks | Ultralytics Docs",
+    "url": "https://docs.ultralytics.com/guides/raspberry-pi"
+  },
+  {
+    "id": 5,
+    "title": "Reduce power consumption of Pi 5 - Raspberry Pi Forums",
+    "url": "https://forums.raspberrypi.com/viewtopic.php?t=384340"
+  },
+  {
+    "id": 6,
+    "title": "Pi 5 power consumption - Raspberry Pi - Pimoroni Buccaneers",
+    "url": "https://forums.pimoroni.com/t/pi-5-power-consumption/23959"
+  },
+  {
+    "id": 7,
+    "title": "Reducing Raspberry Pi 5's power consumption by 140x - Jeff Geerling",
+    "url": "https://www.jeffgeerling.com/blog/2023/reducing-raspberry-pi-5s-power-consumption-140x/"
+  },
+  {
+    "id": 8,
+    "title": "How To Reduce Raspberry Pi 5, 4 Standby Power Consumption | Tom's Hardware",
+    "url": "https://www.tomshardware.com/raspberry-pi/how-to-reduce-raspberry-pi-5-4-standby-power-consumption"
+  },
+  {
+    "id": 9,
+    "title": "Raspi 5 power usage while beeing switched off",
+    "url": "https://raspberrypi.stackexchange.com/questions/149182/raspi-5-power-usage-while-beeing-switched-off"
+  },
+  {
+    "id": 10,
+    "title": "[SOLVED] EEPROM settings documentation - Raspberry Pi Forums",
+    "url": "https://forums.raspberrypi.com/viewtopic.php?t=365557"
+  },
+  {
+    "id": 11,
+    "title": "How can I sleep a raspberry pi and wake it again with an interrupt? | Little Bird Electronics",
+    "url": "https://littlebirdelectronics.com.au/blogs/news/how-can-i-sleep-a-raspberry-pi-and-wake-it-again-with-an-interrupt"
+  },
+  {
+    "id": 12,
+    "title": "Raspberry Pi PIR motion sensor with Schmitt Trigger",
+    "url": "https://forums.raspberrypi.com/viewtopic.php?t=71393"
+  },
+  {
+    "id": 13,
+    "title": "The Raspberry Pi Zero Makes a Great Motion-Sensing Security Camera - LifeTips",
+    "url": "https://lifetips.alibaba.com/tech-efficiency/the-raspberry-pi-zero-makes-a-great-motion-sensing-secu"
+  },
+  {
+    "id": 14,
+    "title": "Arduino Interrupts with PIR Motion Sensor - Maker Portal",
+    "url": "https://makersportal.com/blog/2019/5/27/arduino-interrupts-with-pir-motion-detector"
+  },
+  {
+    "id": 15,
+    "title": "Real-Time Object Detection Using Raspberry Pi Zero 2W: An Optimized Approach",
+    "url": "https://www.researchgate.net/publication/399120906_Real-Time_Object_Detection_Using_Raspberry_Pi_Zero_2W_An_Optimized_Approach"
+  },
+  {
+    "id": 16,
+    "title": "MAXIIOT DL7612-AS923-TH - lorawan : Inspired by LnwShop.com (v2)",
+    "url": "http://lorawan.lnwshop.com/product/113/maxiiot-dl7612-as923-th"
+  },
+  {
+    "id": 17,
+    "title": "Is there a Raspberry Pi - class computer with suspend to ram? : r/raspberry_pi - Reddit",
+    "url": "https://www.reddit.com/r/raspberry_pi/comments/6zifib/is_there_a_raspberry_pi_class_computer_with/"
+  },
+  {
+    "id": 18,
+    "title": "wake up raspberry pi zero W with motion detection : r/raspberry_pi - Reddit",
+    "url": "https://www.reddit.com/r/raspberry_pi/comments/60cr5l/wake_up_raspberry_pi_zero_w_with_motion_detection/"
+  },
+  {
+    "id": 19,
+    "title": "PIR Sensor Interfacing With Raspberry Pi : 5 Steps - Instructables",
+    "url": "https://www.instructables.com/PIR-Sensor-Interfacing-With-Raspberry-Pi/"
+  },
+  {
+    "id": 20,
+    "title": "Multimedia Transmission over LoRa Networks for IoT Applications: A Survey of Strategies, Deployments, and Open Challenges - MDPI",
+    "url": "https://www.mdpi.com/1424-8220/25/23/7128"
+  },
+  {
+    "id": 21,
+    "title": "Raspberry Pi GPIO Sensing: Motion Detection - The Pi Hut",
+    "url": "https://thepihut.com/blogs/raspberry-pi-tutorials/raspberry-pi-gpio-sensing-motion-detection"
+  },
+  {
+    "id": 22,
+    "title": "LoRa / LoRa+WiFi - Arduino, Raspberry Pi, NodeMCU, IoT, Nvidia, Lora, AI, Machine Learning, Teensy, Lidar - Arduitronics",
+    "url": "https://www.arduitronics.com/category/182/internet-of-things-iot/lora-lorawifi"
+  },
+  {
+    "id": 23,
+    "title": "Troubleshooting Witty Pi Clock - Raspberry Pi Forums",
+    "url": "https://forums.raspberrypi.com/viewtopic.php?t=279880"
+  },
+  {
+    "id": 24,
+    "title": "Witty Pi: Realtime Clock + Power Management for Raspberry Pi - UUGear",
+    "url": "https://www.uugear.com/witty-pi-realtime-clock-power-management-for-raspberry-pi/"
+  },
+  {
+    "id": 25,
+    "title": "Auto-Wake a Pi5 without a Pijuice! - General - GOSH Community Forum",
+    "url": "https://forum.openhardware.science/t/auto-wake-a-pi5-without-a-pijuice/5967"
+  },
+  {
+    "id": 26,
+    "title": "Dragino LoRaWan Gateway LG308-AS923-TH-EC25 - Arduitronics",
+    "url": "https://www.arduitronics.com/product/5066/dragino-lorawan-gateway-lg308-as923-th-ec25"
+  },
+  {
+    "id": 27,
+    "title": "Image Transmission via LoRa Networks – A Survey - Semantic Scholar",
+    "url": "https://www.semanticscholar.org/paper/Image-Transmission-via-LoRa-Networks-%E2%80%93-A-Survey-Staikopoulos-Kanakaris/9b5d17ad9e3f21e76f4c4ad3b54cfa3683a666c2"
+  },
+  {
+    "id": 28,
+    "title": "Project | Camera Traps for Citizen Science - Hackaday.io",
+    "url": "https://hackaday.io/project/11088/logs"
+  },
+  {
+    "id": 29,
+    "title": "How I deployed a real-time object detection model on a Raspberry Pi | by Dixit Mudakavi",
+    "url": "https://medium.com/@dixitmudakavi04/how-i-deployed-a-real-time-object-detection-model-on-a-raspberry-pi-b392c9789be2"
+  },
+  {
+    "id": 30,
+    "title": "Raspberry Pi Boot Time Optimization: Complete Performance Guide",
+    "url": "https://ohyaan.github.io/tips/raspberry_pi_boot_time_optimization__complete_performance_guide/"
+  },
+  {
+    "id": 31,
+    "title": "Ultra fast boot Raspberry Pi 3 (Under 4 sec to camera/prompt, full Raspbian) - Reddit",
+    "url": "https://www.reddit.com/r/raspberry_pi/comments/96q24h/ultra_fast_boot_raspberry_pi_3_under_4_sec_to/"
+  },
+  {
+    "id": 32,
+    "title": "Custom Minimal Linux on Raspberry Pi - Hackster.io",
+    "url": "https://www.hackster.io/shubhamsantosh99/custom-minimal-linux-on-raspberry-pi-cc7fdb"
+  },
+  {
+    "id": 33,
+    "title": "Buildroot for a more reliable Pi - Jack Whitham",
+    "url": "https://www.jwhitham.org/2025/07/buildroot-for-more-reliable-pi.html"
+  },
+  {
+    "id": 34,
+    "title": "Raspberry Pi 3 Fastboot – Less Than 2 Seconds | Hacker News",
+    "url": "https://news.ycombinator.com/item?id=28969386"
+  },
+  {
+    "id": 35,
+    "title": "Power Saving on Raspberry Pi OS: Complete Optimization Guide",
+    "url": "https://ohyaan.github.io/tips/power_saving_on_raspberry_pi_os__complete_optimization_guide/"
+  },
+  {
+    "id": 36,
+    "title": "Image Transmission over LoRa-Based Networks: A Performance Study Using Image Compression and Reconstruction Methods - ResearchGate",
+    "url": "https://www.researchgate.net/publication/379057637_Image_Transmission_over_LoRa-Based_Networks_A_Performance_Study_Using_Image_Compression_and_Reconstruction_Methods"
+  },
+  {
+    "id": 37,
+    "title": "RPI5 EEPROM Modification „PSU_MAX_CURRENT=5000“ Anabling the use with a non-USB-PD Bench-Power Supply - DDDAC",
+    "url": "http://blog.dddac.com/wp-content/uploads/Flash-RPi5-and-adding-5000mA-Line-tutorial.pdf"
+  },
+  {
+    "id": 38,
+    "title": "Raspberry Pi 5 EEPROM Recovery Guide - Pi Australia",
+    "url": "https://piaustralia.com.au/pages/raspberry-pi-5-eeprom-recovery-guide"
+  },
+  {
+    "id": 39,
+    "title": "usbboot/docs/secure-boot.md at master - GitHub",
+    "url": "https://github.com/raspberrypi/usbboot/blob/master/docs/secure-boot.md"
+  },
+  {
+    "id": 40,
+    "title": "A Comprehensive Evaluation of Deep Learning Object Detection Models on Heterogeneous Edge Devices - arXiv",
+    "url": "https://arxiv.org/pdf/2409.16808"
+  },
+  {
+    "id": 41,
+    "title": "Real-Time Object Detection with QuantizedYOLOv11 and YOLOv8 on Raspberry Pi 5 for Low-Speed ADAS - ResearchGate",
+    "url": "https://www.researchgate.net/publication/399780145_Real-Time_Object_Detection_with_QuantizedYOLOv11_and_YOLOv8_on_Raspberry_Pi_5_for_Low-Speed_ADAS"
+  },
+  {
+    "id": 42,
+    "title": "A Comprehensive Evaluation of YOLO-Based Deer Detection Performance on Edge Devices - MDPI",
+    "url": "https://www.mdpi.com/2079-9292/15/5/1026"
+  },
+  {
+    "id": 43,
+    "title": "Implementation of visual people counting algorithms in embedded systems - ResearchGate",
+    "url": "https://www.researchgate.net/publication/394131540_Implementation_of_visual_people_counting_algorithms_in_embedded_systems"
+  },
+  {
+    "id": 44,
+    "title": "Raspberry pi5 and power on from gpio 3",
+    "url": "https://forums.raspberrypi.com/viewtopic.php?t=370675"
+  },
+  {
+    "id": 45,
+    "title": "Comparative Benchmarking of CPU, GPU, and NPU Architectures for Real-Time YOLOv8n Inference on Embedded Edge Platforms - ResearchGate",
+    "url": "https://www.researchgate.net/publication/401704444_Comparative_Benchmarking_of_CPU_GPU_and_NPU_Architectures_for_Real-Time_YOLOv8n_Inference_on_Embedded_Edge_Platforms"
+  },
+  {
+    "id": 46,
+    "title": "Raspberry Pi AI/ML Projects: TensorFlow Lite on Pi 5 - Zbotic",
+    "url": "https://zbotic.in/raspberry-pi-ai-ml-projects-tensorflow-lite-on-pi-5/"
+  },
+  {
+    "id": 47,
+    "title": "Gavindu Achintha's Projects - Hackster.io",
+    "url": "https://www.hackster.io/gavindu911/projects"
+  },
+  {
+    "id": 48,
+    "title": "Multimedia Transmission over LoRa Networks for IoT Applications: A Survey of Strategies, Deployments, and Open Challenges - Preprints.org",
+    "url": "https://www.preprints.org/manuscript/202510.1775"
+  },
+  {
+    "id": 49,
+    "title": "Best Lightweight Tracker for Real-Time Use on Raspberry Pi 5 : r/computervision - Reddit",
+    "url": "https://www.reddit.com/r/computervision/comments/1jy9sw7/best_lightweight_tracker_for_realtime_use_on/"
+  },
+  {
+    "id": 50,
+    "title": "Reconstruction of Images Transmitted over LoRa Networks Using Fully Convolutional Neural Network - ISD 2025",
+    "url": "https://isd2025.fon.bg.ac.rs/wp-content/uploads/ISD_2025_camera_ready_207.pdf"
+  },
+  {
+    "id": 51,
+    "title": "Image compression for webcomics - Stack Overflow",
+    "url": "https://stackoverflow.com/questions/422902/image-compression-for-webcomics"
+  },
+  {
+    "id": 52,
+    "title": "Transmission of Images over LoRa - Zenodo",
+    "url": "https://zenodo.org/records/15727186/files/050-Navarro.pdf?download=1"
+  },
+  {
+    "id": 53,
+    "title": "Pico-LoRa-SX1262",
+    "url": "https://m.media-amazon.com/images/I/B1xoFMTZAeL.pdf"
+  },
+  {
+    "id": 54,
+    "title": "Pico-LoRa-SX1262 - Waveshare Wiki",
+    "url": "https://www.waveshare.com/wiki/Pico-LoRa-SX1262"
+  },
+  {
+    "id": 55,
+    "title": "LoRa SX1262 Raspberry Pi Connection Guide | PDF | Codec - Scribd",
+    "url": "https://www.scribd.com/document/972830561/LoRa1"
+  },
+  {
+    "id": 56,
+    "title": "chandrawi/LoRaRF-Python: Python library for basic transmitting and receiving data using LoRa and FSK modem - GitHub",
+    "url": "https://github.com/chandrawi/LoRaRF-Python"
+  },
+  {
+    "id": 57,
+    "title": "Secure LoRa-Based Transmission System: An IoT Solution for Smart Homes and Industries",
+    "url": "https://www.mdpi.com/2079-9292/14/24/4977"
+  },
+  {
+    "id": 58,
+    "title": "Loss-Resilient Thermal Image Fragmentation for LoRa Mesh IoT Networks - Pomiary Automatyka Robotyka",
+    "url": "https://www.par.pl/content/download/19911/291837/file/LossResilientThermalImageFragmentationLoRaMeshIoTNetworks.pdf"
+  },
+  {
+    "id": 59,
+    "title": "SX1262 915M LoRa HAT - Waveshare Wiki",
+    "url": "https://www.waveshare.com/wiki/SX1262_915M_LoRa_HAT"
+  },
+  {
+    "id": 60,
+    "title": "TH AS923 e iC MOD - EmOne",
+    "url": "https://www.emone.co.th/wp-content/uploads/2018/05/iCAS923TH_Datasheet_V0_1_1_draft_compact.pdf"
+  },
+  {
+    "id": 61,
+    "title": "Thailand Updates NBTC Rules for RFID and Non-RFID - 360 Compliance",
+    "url": "https://360compliance.co/global-market-access/thailand-nbtc-updates-920-925mhz-usage-rfid-non-rfid/"
+  },
+  {
+    "id": 62,
+    "title": "[Feature Request]: Adjust Thailand (TH) LoRa radio configuration for Meshtastic · Issue #8482 - GitHub",
+    "url": "https://github.com/meshtastic/firmware/issues/8482"
+  },
+  {
+    "id": 63,
+    "title": "Wirnet iBTS - FCC Report",
+    "url": "https://fcc.report/FCC-ID/2AFYS-KLK64HIGHWAY/4308962.pdf"
+  },
+  {
+    "id": 64,
+    "title": "Raspberry Pi 5 robotics ideas - Scouts by Yutori",
+    "url": "https://scouts.yutori.com/e3d5adba-2867-4555-b685-0b727a694121"
+  },
+  {
+    "id": 65,
+    "title": "A panorama-based technique to estimate sky view factor and solar irradiance considering transmittance of tree canopies - Urban Analytics Lab",
+    "url": "https://ual.sg/publication/2024-bae-svf/2024-bae-svf.pdf"
+  },
+  {
+    "id": 66,
+    "title": "Trees, Sunlight, and Solar Panels: Finding the Right Balance Optimizing Generation from a Solar Array by Minimizing Shade Loss | American Solar Energy Society",
+    "url": "https://ases.org/trees-sunlight-and-aolar-panels-finding-the-right-balance-optimizing-generation-from-a-solar-array-by-minimizing-shade-loss/"
+  },
+  {
+    "id": 67,
+    "title": "Calculation of the Shading Factors for Solar Modules with MATLAB - MDPI",
+    "url": "https://www.mdpi.com/1996-1073/14/15/4713"
+  },
+  {
+    "id": 68,
+    "title": "Assessment of technological developments for camera‐traps: a wireless transmission system and solar panels - Universidade de Lisboa",
+    "url": "https://repositorio.ulisboa.pt/bitstreams/661ded85-9707-4d74-8b73-5d66229aed0d/download"
+  },
+  {
+    "id": 69,
+    "title": "E-DMK-Quick-start-guide-Wirnet_iStation_v5.0_06112020.indd PDF document",
+    "url": "https://device.report/m/75dc68ca81f156a89138c624a15e842aa756e683aa3fdbe1891e0494da3b5975"
+  }
+]

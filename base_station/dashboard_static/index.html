@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Poaching Camera Trap Base Station</title>
+    <meta name="description" content="Real-time long-range wildlife protection and threat monitoring dashboard.">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Leaflet.js Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main Premium Dashboard Layout -->
+    <div class="app-layout">
+        
+        <!-- 1. Left Vertical Navigation Sidebar -->
+        <aside class="sidebar-left">
+            <div class="logo-area">
+                <span class="pulse-ring green"></span>
+                <span class="logo-text">AP-NET <span class="logo-text-sub">BASE STATION</span></span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" id="nav-dashboard">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="9" rx="1" />
+                        <rect x="14" y="3" width="7" height="5" rx="1" />
+                        <rect x="14" y="12" width="7" height="9" rx="1" />
+                        <rect x="3" y="16" width="7" height="5" rx="1" />
+                    </svg>
+                    <span>Map</span>
+                </a>
+                <a href="#" class="nav-item" id="nav-traps">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
+                        <path d="M12 6v6l4 2" />
+                    </svg>
+                    <span>Camera Traps</span>
+                </a>
+                <a href="#" class="nav-item" id="nav-logs">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    <span>Incident History</span>
+                </a>
+                <a href="#" class="nav-item" id="nav-stats">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10" />
+                        <line x1="12" y1="20" x2="12" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                    <span>Threat Stats</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="footer-status">
+                    <span class="pulse-ring green"></span>
+                    <span>Systems Online</span>
+                </div>
+                <a href="#" class="footer-link">
+                    <svg class="footer-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                    <span>User Manual</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- 2. Right Workspace Layout -->
+        <div class="workspace-main">
+            <!-- 2.1 Dashboard View -->
+            <div id="dashboard-view" class="workspace-view">
+                <!-- Leaflet Map Background -->
+                <div id="map"></div>
+                
+                <!-- Workspace Content Wrapper (Floating Over Map) -->
+                <div class="workspace-content-wrapper">
+                    
+                    <!-- Top Dashboard Header Bar -->
+                    <header class="workspace-header">
+                    <div class="header-title">
+                        <h2>Map View</h2>
+                    <span class="header-subtitle">Huai Kha Khaeng Wildlife Protection Hub</span>
+                    </div>
+                    
+                    <div class="header-controls">
+                        <!-- SSE Connection Status -->
+                        <div class="header-status-badge">
+                            <span class="status-dot green"></span>
+                            <span id="connection-badge" class="badge badge-success">CONNECTED</span>
+                        </div>
+                        <!-- Settings Trigger -->
+                        <button id="btn-settings" class="action-btn">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 4px;">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            </svg>
+                            <span>SETTINGS</span>
+                        </button>
+                        <!-- Notification Icon -->
+                        <div class="icon-btn-circle" title="Notifications">
+                            <svg class="header-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 22a2.01 2.01 0 0 0 2-2h-4a2.01 2.01 0 0 0 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                            </svg>
+                            <span class="notification-indicator"></span>
+                        </div>
+                        <!-- User Avatar -->
+                        <div class="user-avatar" title="Ranger Headquarters Operator">
+                            HQ
+                        </div>
+                    </div>
+                    </header>
+                    
+                    
+                    
+                    <!-- 4. Central Dashboard Content Grid -->
+                    <div class="dashboard-grid-new">
+                        
+        
+        
+                        <!-- Map Panel: Transparent container for floating map widgets -->
+                        <section class="map-panel">
+                            <!-- Floating Camera Status Panel (Step 1 - Camera activation to right side) -->
+                            <div id="camera-status-panel" class="camera-status-panel">
+                                <div class="panel-header-mini">
+                                    <h3>CAMERA TRAP ACTIVATION</h3>
+                                    <button id="btn-hide-status" class="hide-status-btn" title="Hide Status Panel">&times;</button>
+                                </div>
+                                <div class="panel-body-mini">
+                                    <div class="camera-status-list" id="camera-status-list">
+                                        <!-- Populated dynamically by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Floating Show Button -->
+                            <button id="btn-show-status" class="show-status-btn hidden" title="Show Status Panel">
+                                <svg class="status-panel-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                                <span>CAMERAS</span>
+                            </button>
+                            
+        
+                        </section>
+                        
+                        <!-- Bottom Log: Historical Alerts (Step 2 & 3 - tab bar incident log, click to see table log) -->
+                        <section class="log-panel glassmorphic collapsed">
+                            <div class="panel-header" id="log-panel-header" style="cursor: pointer;" title="Click to collapse/expand log">
+                                <div style="display: flex; align-items: center; gap: 8px; user-select: none;">
+                                    <svg id="log-collapse-icon" class="collapse-chevron" viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px; transition: transform 0.3s ease; color: #9ca3af;">
+                                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                                    </svg>
+                                    <h2>INCIDENT HISTORY LOG</h2>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <button id="btn-export-csv" class="action-btn-mini" title="Export Incident Log to CSV">EXPORT CSV</button>
+                                    <span id="log-count" class="log-badge">0 Logs</span>
+                                </div>
+                            </div>
+                            <div class="log-toolbar">
+                                <div class="log-tabs">
+                                    <button class="log-tab active" data-filter="all">ALL</button>
+                                    <button class="log-tab" data-filter="active">ACTIVE THREATS</button>
+                                    <button class="log-tab" data-filter="resolved">RESOLVED</button>
+                                </div>
+                                <div class="log-filter-controls">
+                                    <div class="search-input-wrapper">
+                                        <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+                                        </svg>
+                                        <input type="text" id="log-search-input" placeholder="Filter by Location, ID, type..." />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="log-table-container">
+                                <table class="log-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="sortable-header" data-sort="timestamp">Timestamp <span class="sort-arrow">▼</span></th>
+                                            <th class="sortable-header" data-sort="nodeId">Trap ID <span class="sort-arrow"></span></th>
+                                            <th class="sortable-header" data-sort="threatType">Alert Type <span class="sort-arrow"></span></th>
+                                            <th class="sortable-header" data-sort="confidence">Confidence <span class="sort-arrow"></span></th>
+                                            <th class="sortable-header" data-sort="locationName">Location Name <span class="sort-arrow"></span></th>
+                                            <th class="sortable-header" data-sort="rssi">RSSI / Quality <span class="sort-arrow"></span></th>
+                                            <th>Action Taken</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="log-tbody">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                        
+                    </div>
+                    
+                </div> <!-- End .workspace-content-wrapper -->
+            </div> <!-- End #dashboard-view -->
+            
+            <!-- 2.2 Dedicated Incident History View -->
+            <div id="incident-view" class="workspace-view hidden">
+                <div class="incident-workspace-content">
+                    <!-- Header -->
+                    <header class="workspace-header">
+                        <div class="header-title">
+                            <h2>Incident History</h2>
+                            <span class="header-subtitle">Historical sensor detection records and operational calendar</span>
+                        </div>
+                        <div class="header-controls">
+                            <button id="btn-back-to-dashboard" class="action-btn">
+                                🗺️ RETURN TO DASHBOARD
+                            </button>
+                        </div>
+                    </header>
+                    
+                    <!-- Analytics Summary Cards for Incident Page -->
+                    <div class="stats-bar" style="margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
+                        <div class="stat-card glassmorphic">
+                            <span class="stat-label">Total Recorded Cases</span>
+                            <span id="inc-stat-total" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-card glassmorphic">
+                            <span class="stat-label">Critical Human Threats</span>
+                            <span id="inc-stat-critical" class="stat-value" style="color: #ef4444;">0</span>
+                        </div>
+                        <div class="stat-card glassmorphic">
+                            <span class="stat-label">Wildlife Detections</span>
+                            <span id="inc-stat-wildlife" class="stat-value" style="color: #10b981;">0</span>
+                        </div>
+                        <div class="stat-card glassmorphic">
+                            <span class="stat-label">Resolution Rate</span>
+                            <span id="inc-stat-rate" class="stat-value" style="color: #a855f7;">100%</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Incident Content Grid -->
+                    <div class="incident-grid">
+                        <!-- Left: Calendar Panel -->
+                        <div class="incident-calendar-panel glassmorphic">
+                            <div class="calendar-header-new">
+                                <button id="btn-prev-month" class="cal-nav-btn">&lt;</button>
+                                <h3 id="calendar-month-year">June 2026</h3>
+                                <button id="btn-next-month" class="cal-nav-btn">&gt;</button>
+                            </div>
+                            <div class="calendar-weekdays">
+                                <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+                            </div>
+                            <div class="calendar-days-grid" id="calendar-days-container">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Right: Daily Incidents Detail -->
+                        <div class="incident-details-panel-new glassmorphic">
+                            <div class="details-header-new">
+                                <h3 id="selected-date-title">All Historical Incidents</h3>
+                                <button id="btn-clear-date-filter" class="action-btn-mini hidden">SHOW ALL</button>
+                            </div>
+                            
+                            <div class="incident-history-table-wrapper">
+                                <table class="log-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Trap ID</th>
+                                            <th>Alert Type</th>
+                                            <th>Confidence</th>
+                                            <th>Location Name</th>
+                                            <th>Action Taken</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inc-history-tbody">
+                                        <!-- Populated dynamically by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End #incident-view -->
+            
+            <!-- 2.3 Dedicated Camera Traps View -->
+            <div id="camera-traps-view" class="workspace-view hidden">
+                <div class="camera-workspace-content">
+                    <!-- View 1: Camera Registry List -->
+                    <div id="modal-view-registry">
+                        <header class="workspace-header" style="margin-bottom: 20px;">
+                            <div class="header-title">
+                                <h2>CAMERA TRAP REGISTRY</h2>
+                                <span class="header-subtitle">Real-time status and operational registry of all deployed long-range telemetry nodes</span>
+                            </div>
+                            <div class="header-controls">
+                                <button id="btn-close-traps-modal" class="action-btn">
+                                    🗺️ RETURN TO MAP
+                                </button>
+                            </div>
+                        </header>
+                        
+                        <div class="registry-container-new" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div class="modal-traps-list-grid" id="modal-traps-list">
+                                <!-- Dynamic Trap Cards populated by JS -->
+                            </div>
+                            <button id="btn-add-sensor" class="modal-action-btn accent-btn" style="width: 100%; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">➕ ADD NEW CAMERA TRAP</button>
+                        </div>
+                    </div>
+                    
+                    <!-- View 2: Configure Form (Hidden by default) -->
+                    <div id="modal-view-config" class="hidden">
+                        <header class="workspace-header" style="margin-bottom: 20px;">
+                            <div class="header-title">
+                                <h2 id="config-modal-title">CONFIGURE CAMERA TRAP</h2>
+                                <span class="header-subtitle">Configure camera trap telemetry settings and coordinate location</span>
+                            </div>
+                            <div class="header-controls">
+                                <button id="btn-close-config-modal" class="action-btn">
+                                    🗂️ RETURN TO REGISTRY
+                                </button>
+                            </div>
+                        </header>
+                        
+                        <div class="panel-body glassmorphic" style="padding: 24px; border-radius: 12px; border: 1px solid var(--color-border); background-color: rgba(13, 19, 36, 0.45); display: flex; flex-direction: column; gap: 16px; max-width: 800px; margin: 0 auto;">
+                            <input type="hidden" id="config-mode" value="edit" /> <!-- 'edit' or 'add' -->
+                            
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="config-node-id" style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Camera Trap ID:</label>
+                                <input type="text" id="config-node-id" class="form-input" style="background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-border); border-radius: 4px; padding: 8px; color: white; font-size: 0.85rem;" placeholder="e.g. Camera-Trap-04" />
+                            </div>
+                            
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="config-node-name" style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Deployment Name:</label>
+                                <input type="text" id="config-node-name" class="form-input" style="background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-border); border-radius: 4px; padding: 8px; color: white; font-size: 0.85rem;" placeholder="e.g. North River Crossing" />
+                            </div>
+                            
+                            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                    <label for="config-node-lat" style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Latitude:</label>
+                                    <input type="number" id="config-node-lat" class="form-input" step="0.000001" style="background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-border); border-radius: 4px; padding: 8px; color: white; font-size: 0.85rem;" placeholder="e.g. 15.6068" />
+                                </div>
+                                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                    <label for="config-node-lng" style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Longitude:</label>
+                                    <input type="number" id="config-node-lng" class="form-input" step="0.000001" style="background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-border); border-radius: 4px; padding: 8px; color: white; font-size: 0.85rem;" placeholder="e.g. 99.3181" />
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <label for="config-node-desc" style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Description:</label>
+                                <textarea id="config-node-desc" class="form-input" rows="4" style="background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-border); border-radius: 4px; padding: 8px; color: white; font-size: 0.85rem; resize: none;" placeholder="Describe the environment or high-risk features..."></textarea>
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 12px;">
+                                <button id="btn-back-to-registry" class="modal-action-btn" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px;">⬅️ BACK</button>
+                                <button id="btn-save-modal-config" class="modal-action-btn accent-btn" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 6px; font-weight: 700;">💾 SAVE CONFIG</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End #camera-traps-view -->
+        </div>
+    </div>
+    
+    <!-- Settings Panel (Slide-out Drawer) -->
+    <div id="settings-drawer" class="settings-drawer glassmorphic">
+        <div class="panel-header">
+            <h2>CAMERA TRAP SETTINGS</h2>
+            <button id="btn-close-settings" class="close-btn">&times;</button>
+        </div>
+        <div class="panel-body">
+            <div class="form-group">
+                <label for="settings-node-select">Select Camera Trap Node:</label>
+                <select id="settings-node-select" class="form-input">
+                    <option value="Camera-Trap-01">Camera-Trap-01 (Active - Huai Kha Khaeng)</option>
+                    <option value="Camera-Trap-02">Camera-Trap-02 (Huai Kha Khaeng - North)</option>
+                    <option value="Camera-Trap-03">Camera-Trap-03 (Huai Kha Khaeng - South)</option>
+                </select>
+            </div>
+            <hr class="form-divider" />
+            <div class="form-group">
+                <label for="settings-node-name">Location Name:</label>
+                <input type="text" id="settings-node-name" class="form-input" placeholder="e.g. Ranger Station 3" />
+            </div>
+            <div class="form-group">
+                <label for="settings-node-lat">Latitude:</label>
+                <input type="number" id="settings-node-lat" class="form-input" step="0.0001" placeholder="e.g. 12.0498" />
+            </div>
+            <div class="form-group">
+                <label for="settings-node-lng">Longitude:</label>
+                <input type="number" id="settings-node-lng" class="form-input" step="0.0001" placeholder="e.g. 99.6231" />
+            </div>
+            <div class="form-group">
+                <label for="settings-node-desc">Description:</label>
+                <textarea id="settings-node-desc" class="form-input" rows="3" placeholder="Describe the deployment area..."></textarea>
+            </div>
+            <button id="btn-save-settings" class="save-btn">SAVE CONFIGURATION</button>
+        </div>
+    </div>
+
+
+
+    <!-- Threat Alert Details Modal (Pop-up) -->
+    <div id="threat-detail-modal" class="custom-modal-overlay hidden">
+        <div class="custom-modal-content glassmorphic sidebar-panel" style="width: 420px; max-width: 95%;">
+            <div class="panel-header">
+                <h2>LATEST THREAT ALERT</h2>
+                <button id="btn-close-threat-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="panel-body" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Image Preview Frame -->
+                <div class="image-viewer-frame">
+                    <div id="no-image-placeholder" class="image-placeholder">
+                        <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                        <p>Waiting for LoRa Transmission...</p>
+                    </div>
+                    <img id="alert-image" class="alert-image hidden" src="" alt="Minimized LoRa Payload" />
+                    <div class="data-minimization-badge">
+                        <span>LoRa Optimized: 128x128 Grayscale</span>
+                    </div>
+                </div>
+
+                <!-- Alert Metadata Cards -->
+                <div class="metadata-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div class="metadata-card" style="padding: 8px 10px;">
+                        <span class="meta-label" style="font-size: 0.6rem;">Node Source</span>
+                        <span id="meta-node-id" class="meta-value" style="font-size: 0.78rem;">-</span>
+                    </div>
+                    <div class="metadata-card" style="padding: 8px 10px;">
+                        <span class="meta-label" style="font-size: 0.6rem;">Threat Classification</span>
+                        <span id="meta-threat-type" class="meta-value" style="font-size: 0.78rem;">-</span>
+                    </div>
+                    <div class="metadata-card" style="padding: 8px 10px;">
+                        <span class="meta-label" style="font-size: 0.6rem;">Confidence Score</span>
+                        <span id="meta-confidence" class="meta-value" style="font-size: 0.78rem;">-</span>
+                    </div>
+                    <div class="metadata-card" style="padding: 8px 10px;">
+                        <span class="meta-label" style="font-size: 0.6rem;">Timestamp (UTC)</span>
+                        <span id="meta-timestamp" class="meta-value" style="font-size: 0.78rem;">-</span>
+                    </div>
+                    <div class="metadata-card" style="padding: 8px 10px;">
+                        <span class="meta-label" style="font-size: 0.6rem;">Signal Quality (RSSI)</span>
+                        <span id="meta-rssi" class="meta-value" style="font-size: 0.78rem;">-</span>
+                    </div>
+                    <div class="metadata-card" style="padding: 8px 10px;">
+                        <span class="meta-label" style="font-size: 0.6rem;">Battery Level</span>
+                        <span id="meta-battery" class="meta-value" style="font-size: 0.78rem;">-</span>
+                    </div>
+                </div>
+                
+                <!-- LoRa Transmission Progress Bar (Dynamic) -->
+                <div id="transmission-progress-panel" class="transmission-progress-panel hidden">
+                    <div class="progress-info">
+                        <span class="progress-label">LoRa ARQ Stream Active...</span>
+                        <span id="progress-percent-val" class="progress-val">45%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div id="progress-bar-fill" class="progress-bar-fill" style="width: 45%;"></div>
+                    </div>
+                </div>
+                
+                <!-- Threat Statistics Widget -->
+                <div class="threat-stats-panel-new">
+                    <h4 class="mini-panel-title">THREAT SUMMARY statistics</h4>
+                    <div class="threat-mini-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                        <div class="mini-stat-box" style="padding: 6px 4px;">
+                            <span class="mini-val" id="stat-total-alerts" style="font-size: 0.9rem;">0</span>
+                            <span class="mini-lbl" style="font-size: 0.58rem;">Total</span>
+                        </div>
+                        <div class="mini-stat-box" style="padding: 6px 4px;">
+                            <span class="mini-val red-text" id="stat-active-alerts" style="font-size: 0.9rem;">0</span>
+                            <span class="mini-lbl" style="font-size: 0.58rem;">Active</span>
+                        </div>
+                        <div class="mini-stat-box" style="padding: 6px 4px;">
+                            <span class="mini-val green-text" id="stat-resolved-alerts" style="font-size: 0.9rem;">0</span>
+                            <span class="mini-lbl" style="font-size: 0.58rem;">Resolved</span>
+                        </div>
+                        <div class="mini-stat-box" style="padding: 6px 4px;">
+                            <span class="mini-val blue-text" id="stat-resolve-rate" style="font-size: 0.9rem;">0%</span>
+                            <span class="mini-lbl" style="font-size: 0.58rem;">Rate</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="btn-acknowledge" class="acknowledge-btn hidden" style="margin-top: 4px; padding: 10px;">MARK RESOLVED</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Banner -->
+    <div id="notification-banner" class="notification-banner hidden">
+        <span id="notification-message">Settings saved successfully!</span>
+    </div>
+
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Custom Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>

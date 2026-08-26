@@ -1,0 +1,20 @@
+{
+  "Camera-Trap-01": {
+    "name": "Huai Kha Khaeng - Updated HQ",
+    "latitude": 15.596891,
+    "longitude": 99.361137,
+    "description": "Core sanctuary surveillance zone. Critical tiger, leopard, and elephant habitat."
+  },
+  "Camera-Trap-02": {
+    "name": "Huai Kha Khaeng - North Station",
+    "latitude": 15.6324,
+    "longitude": 99.3087,
+    "description": "North river valley crossing. Highly active corridor for wildlife and potential poacher access."
+  },
+  "Camera-Trap-03": {
+    "name": "Huai Kha Khaeng - South Trail",
+    "latitude": 15.5562,
+    "longitude": 99.2854,
+    "description": "South boundary patrol trail. High-risk sector near village buffer zone."
+  }
+}

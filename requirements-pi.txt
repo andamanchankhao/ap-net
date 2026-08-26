@@ -1,0 +1,31 @@
+# Raspberry Pi 5 field node — pip packages
+#
+# Install the apt packages FIRST (they are not available or not correct from pip):
+#
+#   sudo apt update
+#   sudo apt install -y python3-picamera2 python3-lgpio python3-pil git
+#
+# Then make a venv that can still see them:
+#
+#   python3 -m venv --system-site-packages .venv
+#   source .venv/bin/activate
+#   pip install -r requirements-pi.txt
+
+Pillow>=10.0.0
+
+# ONNX Runtime: the recommended inference backend on a Pi 5 (Planning.md 6.2).
+# aarch64 wheels are published, so this is a normal pip install.
+onnxruntime>=1.17.0
+numpy>=1.24.0
+
+# Only needed for the live preview window (edge_node/capture_webcam.py).
+# A headless trap running field_node.py does not need it.
+opencv-python>=4.8.0
+
+# gpiozero comes from apt as python3-gpiozero on Raspberry Pi OS. Uncomment only if
+# your image lacks it. NOTE: RPi.GPIO does NOT work on the Pi 5 — do not install it.
+# gpiozero>=2.0
+
+# Exporting yolov8n.onnx pulls in PyTorch (~1 GB). Prefer exporting on a laptop and
+# copying the .onnx across. Uncomment to export on the Pi itself:
+# ultralytics>=8.0.0
