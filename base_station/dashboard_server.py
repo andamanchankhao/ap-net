@@ -7,13 +7,17 @@ may hold port 5005).
 """
 
 import os
+import re
 import sys
+import hmac
 import json
 import time
 import queue
 import random
 import shutil
 import socket
+import secrets
+import base64
 import argparse
 import threading
 import http.server
@@ -51,6 +55,19 @@ clients_lock = threading.Lock()
 active_cameras = {}
 active_cameras_lock = threading.Lock()
 
+# HTTP Basic Auth credentials as (username, password), or None to disable auth entirely.
+# None is only safe when bound to loopback, where only local processes can connect at all
+# (FIX_PLAN.md C1). main() sets this before the server starts serving requests.
+AUTH_CREDENTIALS = None
+
+# /simulate-alert rate limiting and image-count cap (FIX_PLAN.md C3). Without this, a
+# scripted client (or a runaway UI double-click loop) can call it as fast as the disk
+# allows, generating unbounded simulated_*.png files.
+SIMULATE_MIN_INTERVAL_S = 1.0
+SIMULATE_MAX_IMAGES = 50
+_last_simulate_time = 0.0
+_simulate_lock = threading.Lock()
+
 
 def broadcast_event(event_data):
     """Push an event to every connected SSE client."""
@@ -71,6 +88,38 @@ def online_cameras():
     with active_cameras_lock:
         return [node for node, seen in active_cameras.items()
                 if now - seen < CAMERA_ONLINE_WINDOW_S]
+
+
+def safe_filename_component(text, fallback="node"):
+    """
+    Reduce arbitrary text to something safe to embed in a filename.
+
+    _handle_simulate() builds a filename from the client-supplied node_id. Without this,
+    a request like {"node_id": "../../../../tmp/pwned"} would make os.path.join produce a
+    path outside RECEIVED_IMAGES_DIR entirely, and shutil.copy would write the seed image
+    there - a path-traversal write primitive, found while adding the C3 rate limit below.
+    """
+    cleaned = re.sub(r"[^A-Za-z0-9_-]+", "_", text or "").strip("_")
+    return cleaned[:64] or fallback
+
+
+def prune_simulated_images(output_dir, pattern="simulated_*.png", keep=SIMULATE_MAX_IMAGES):
+    """
+    Delete the oldest simulated_*.png files beyond `keep` (FIX_PLAN.md C3). Only ever
+    touches files matching this prefix, so real received transmissions are untouched.
+    """
+    import glob
+
+    matches = glob.glob(os.path.join(output_dir, pattern))
+    if len(matches) <= keep:
+        return
+
+    matches.sort(key=os.path.getmtime)
+    for path in matches[:-keep]:
+        try:
+            os.remove(path)
+        except OSError as e:
+            print(f"[SERVER] Warning: could not prune {path}: {e}")
 
 
 # =============================================================================
@@ -113,8 +162,61 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass   # the receiver and watcher already narrate; keep the console readable
 
+    # --- auth ---
+    def _authorized(self):
+        """
+        Check HTTP Basic Auth against AUTH_CREDENTIALS.
+
+        AUTH_CREDENTIALS is None when the server is loopback-only (main() only leaves
+        auth disabled in that case), so this always returns True in that mode - only
+        local processes can reach the socket at all.
+
+        Uses hmac.compare_digest for both fields so a timing attack cannot narrow down
+        the password one byte at a time.
+        """
+        if AUTH_CREDENTIALS is None:
+            return True
+
+        header = self.headers.get("Authorization", "")
+        if not header.startswith("Basic "):
+            return False
+
+        try:
+            decoded = base64.b64decode(header[6:]).decode("utf-8")
+            user, _, password = decoded.partition(":")
+        except (ValueError, UnicodeDecodeError):
+            return False
+
+        expected_user, expected_pass = AUTH_CREDENTIALS
+        return (hmac.compare_digest(user, expected_user) and
+                hmac.compare_digest(password, expected_pass))
+
+    def _require_auth(self):
+        """
+        Send a 401 challenge if unauthenticated. Returns whether the request may proceed.
+
+        The browser handles the rest natively: it prompts for credentials once per
+        origin+realm and then attaches them to every subsequent request automatically -
+        including images, fetch() calls and the EventSource /events stream - so nothing
+        in app.js needs to change for this to work end to end.
+        """
+        if self._authorized():
+            return True
+
+        body = b"Authentication required."
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="AP-NET Base Station"')
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return False
+
     # --- GET ---
     def do_GET(self):
+        if not self._require_auth():
+            return
+
         path = self.path.split("?")[0]
 
         if path == "/events":
@@ -210,6 +312,9 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
 
     # --- POST ---
     def do_POST(self):
+        if not self._require_auth():
+            return
+
         path = self.path.split("?")[0]
 
         if path == "/sensor-config":
@@ -275,6 +380,26 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
         return self._send_json({"success": True, "incident": record})
 
     def _handle_simulate(self):
+        global _last_simulate_time
+
+        # Rate limit (FIX_PLAN.md C3): without this, a scripted client - or an
+        # authenticated-but-compromised session - can call this endpoint as fast as the
+        # disk allows and flood received_images/ with simulated_*.png files.
+        with _simulate_lock:
+            now = time.time()
+            elapsed = now - _last_simulate_time
+            if elapsed < SIMULATE_MIN_INTERVAL_S:
+                retry_after = SIMULATE_MIN_INTERVAL_S - elapsed
+                self.send_response(429)
+                self.send_header("Retry-After", f"{retry_after:.1f}")
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                body = json.dumps({"error": "Too many requests. Slow down."}).encode()
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            _last_simulate_time = now
+
         body = self._read_json_body()
         if body is None:
             return self._send_json({"error": "Invalid JSON body"}, status=400)
@@ -294,8 +419,12 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
         except (OSError, json.JSONDecodeError) as e:
             print(f"[SERVER] Warning: could not read sensor config: {e}")
 
+        # Sanitize before it becomes part of a filename - an unsanitized node_id like
+        # "../../../../tmp/pwned" would let os.path.join escape RECEIVED_IMAGES_DIR
+        # entirely and write the seed image anywhere the server process can reach.
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        png_name = f"simulated_{node_name.lower().replace('-', '_')}_{stamp}.png"
+        node_slug = safe_filename_component(node_name)
+        png_name = f"simulated_{node_slug}_{stamp}.png"
         dest = os.path.join(RECEIVED_IMAGES_DIR, png_name)
         seed = os.path.join(RECEIVED_IMAGES_DIR, "seed_human.png")
 
@@ -306,6 +435,7 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
             else:
                 from PIL import Image
                 Image.new("L", (128, 128), color=128).save(dest)
+            prune_simulated_images(RECEIVED_IMAGES_DIR)
         except Exception as e:
             return self._send_json({"error": f"Could not stage image: {e}"}, status=500)
 
@@ -434,12 +564,17 @@ def reset_received_images():
     print(f"[SERVER] --reset: archived {moved} file(s) to {archive}")
 
 
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="AP-NET base station dashboard server")
-    parser.add_argument("--host", default="0.0.0.0",
-                        help="Bind address. 0.0.0.0 exposes the dashboard on the LAN "
-                             "(needed to view a Raspberry Pi from another machine); "
-                             "use 127.0.0.1 to keep it local-only.")
+    parser.add_argument("--host", default="127.0.0.1",
+                        help="Bind address. 127.0.0.1 (default) keeps the dashboard "
+                             "local-only. Pass 0.0.0.0 to view it from another machine "
+                             "on the LAN (e.g. a Raspberry Pi field node reaching this "
+                             "as its base station) - doing so requires a password; see "
+                             "--user/--password.")
     parser.add_argument("--port", type=int, default=DASHBOARD_PORT)
     parser.add_argument("--loss-rate", type=float, default=0.15,
                         help="Simulated LoRa packet loss (0.0 disables)")
@@ -447,7 +582,41 @@ def parse_args():
                         help="Archive everything currently in received_images/ before starting")
     parser.add_argument("--no-receiver", action="store_true",
                         help="Do not start the UDP receiver (frees port 5005)")
+    parser.add_argument("--user", default="ranger",
+                        help="Basic Auth username when bound off loopback (default: ranger)")
+    parser.add_argument("--password", default="",
+                        help="Basic Auth password when bound off loopback. "
+                             "Auto-generated and printed at startup if omitted.")
+    parser.add_argument("--no-auth", action="store_true",
+                        help="DANGEROUS: disable auth even when bound off loopback. "
+                             "Only for a trusted, isolated test network.")
     return parser.parse_args()
+
+
+def configure_auth(args):
+    """
+    Decide whether Basic Auth is required and set the module-level credentials.
+
+    Loopback-only binding needs no auth: only processes on this machine can open the
+    socket at all. Anything else defaults to requiring a password (FIX_PLAN.md C1) -
+    the dashboard used to bind 0.0.0.0 with no authentication whatsoever, so anyone on
+    the same Wi-Fi could read live ranger response locations or forge alerts.
+
+    Returns the password actually in effect, or None when auth is disabled.
+    """
+    global AUTH_CREDENTIALS
+
+    if args.host in LOOPBACK_HOSTS:
+        AUTH_CREDENTIALS = None
+        return None
+
+    if args.no_auth:
+        AUTH_CREDENTIALS = None
+        return None
+
+    password = args.password or secrets.token_urlsafe(12)
+    AUTH_CREDENTIALS = (args.user, password)
+    return password
 
 
 def main():
@@ -460,6 +629,8 @@ def main():
         reset_received_images()
 
     generate_seed_images()
+
+    password = configure_auth(args)
 
     stop_event = threading.Event()
     if not args.no_receiver:
@@ -475,14 +646,21 @@ def main():
     print("              ANTI-POACHING BASE STATION DASHBOARD".center(80))
     print("=" * 80)
     print(f"  Dashboard   : http://{display_host}:{args.port}")
-    if args.host == "0.0.0.0":
+    if args.host not in LOOPBACK_HOSTS:
         try:
             lan_ip = socket.gethostbyname(socket.gethostname())
             print(f"  On the LAN  : http://{lan_ip}:{args.port}")
         except OSError:
             pass
-        print("  NOTE        : bound to all interfaces with no authentication.")
-        print("                See FIX_PLAN.md C1 before using on an untrusted network.")
+        if password:
+            print("  AUTH        : Basic Auth required (the browser will prompt).")
+            print(f"                user     : {args.user}")
+            print(f"                password : {password}")
+            if not args.password:
+                print("                (auto-generated - pass --password to set a fixed one)")
+        else:
+            print("  AUTH        : *** DISABLED (--no-auth) — anyone on this network can")
+            print("                read alerts, move camera traps, or forge intrusions. ***")
     print(f"  LoRa RX     : {'disabled' if args.no_receiver else f'{BASE_STATION_HOST}:{BASE_STATION_PORT}'}")
     print(f"  Incidents   : {existing} in history")
     print("  Ctrl+C to stop.")

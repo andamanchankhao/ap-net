@@ -59,6 +59,23 @@ const nodeLatestRssi = {
 const activeThreatNodes = new Set();
 
 // =============================================================================
+// SECURITY: HTML ESCAPING
+// =============================================================================
+// Node IDs, names and descriptions all come from sensor_config.json, which is written
+// wholesale by POST /sensor-config with no server-side sanitisation. Every place that
+// interpolates one of those fields (or any other server-sourced string) into an
+// innerHTML template literal must escape it here first, or a camera trap named
+// `<img src=x onerror=...>` runs script in every ranger's browser (FIX_PLAN.md C2).
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+// =============================================================================
 // 1. MAP INITIALIZATION (LEAFLET)
 // =============================================================================
 function initMap() {
@@ -82,15 +99,15 @@ function getPopupContent(nodeId, info, distanceKm) {
     return `
         <div class="custom-leaflet-card" style="padding: 4px; font-family: 'Inter', sans-serif; min-width: 220px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong style="color: #3b82f6; font-size: 11px; letter-spacing: 0.05em; font-weight: 800;">${nodeId}</strong>
+                <strong style="color: #3b82f6; font-size: 11px; letter-spacing: 0.05em; font-weight: 800;">${escapeHtml(nodeId)}</strong>
                 <span class="status-badge-${statusClass}" style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; ${
-                    isThreat 
-                    ? 'background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25);' 
+                    isThreat
+                    ? 'background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25);'
                     : 'background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25);'
                 }">${statusText}</span>
             </div>
-            <h4 style="font-weight: 700; font-size: 13px; color: #f3f4f6; margin-bottom: 4px; margin-top: 0;">${info.name}</h4>
-            <p style="color: #9ca3af; font-size: 11px; margin-top: 4px; margin-bottom: 8px; line-height: 1.3;">${info.description}</p>
+            <h4 style="font-weight: 700; font-size: 13px; color: #f3f4f6; margin-bottom: 4px; margin-top: 0;">${escapeHtml(info.name)}</h4>
+            <p style="color: #9ca3af; font-size: 11px; margin-top: 4px; margin-bottom: 8px; line-height: 1.3;">${escapeHtml(info.description)}</p>
             <div style="height: 1px; background-color: rgba(255, 255, 255, 0.05); margin: 8px 0;"></div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
                 <div style="display: flex; flex-direction: column; background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 4px 6px;">
@@ -111,7 +128,7 @@ function getPopupContent(nodeId, info, distanceKm) {
                 </div>
             </div>
             ${isThreat ? `
-                <button onclick="viewActiveThreat('${nodeId}')" style="margin-top: 10px; width: 100%; padding: 6px 10px; background-color: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; color: #f87171; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-family: 'Inter', sans-serif;" onmouseover="this.style.backgroundColor='rgba(239, 68, 68, 0.3)'; this.style.borderColor='rgba(239, 68, 68, 0.5)';" onmouseout="this.style.backgroundColor='rgba(239, 68, 68, 0.15)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';">VIEW ALERT DETAILS</button>
+                <button class="popup-view-threat-btn" data-node-id="${escapeHtml(nodeId)}" style="margin-top: 10px; width: 100%; padding: 6px 10px; background-color: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; color: #f87171; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-family: 'Inter', sans-serif;" onmouseover="this.style.backgroundColor='rgba(239, 68, 68, 0.3)'; this.style.borderColor='rgba(239, 68, 68, 0.5)';" onmouseout="this.style.backgroundColor='rgba(239, 68, 68, 0.15)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';">VIEW ALERT DETAILS</button>
             ` : ''}
             <div style="font-size: 9px; color: #4b5563; margin-top: 8px; text-align: center;">
                 * Drag marker to relocate camera
@@ -120,7 +137,13 @@ function getPopupContent(nodeId, info, distanceKm) {
     `;
 }
 
-window.viewActiveThreat = function(nodeId) {
+// Called from a delegated click listener (see initPopupThreatButtonController below), not
+// from an inline onclick="" attribute. nodeId therefore always arrives as a real JS string
+// value read via .dataset, never re-parsed out of HTML/attribute text - the injection this
+// sidesteps is that an onclick="viewActiveThreat('${nodeId}')" attribute would need BOTH
+// HTML-attribute escaping AND JS-string escaping to be safe, because the browser HTML-decodes
+// the attribute value before handing it to the JS parser, undoing a plain escapeHtml() pass.
+function viewActiveThreat(nodeId) {
     const activeLog = incidentLog.find(l => l.nodeId === nodeId && l.action === "PATROL_DISPATCHED");
     if (activeLog) {
         const row = document.querySelector(`#log-tbody tr[data-id="${activeLog.logId}"]`);
@@ -144,7 +167,17 @@ window.viewActiveThreat = function(nodeId) {
             loadAlertIntoSidebar(nodeLog, true);
         }
     }
-};
+}
+
+// Popup content is regenerated on every marker click (getPopupContent), so the button
+// inside it is bound once, here, via delegation on the document rather than re-attaching
+// a listener each time a popup opens.
+function initPopupThreatButtonController() {
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest(".popup-view-threat-btn");
+        if (btn) viewActiveThreat(btn.dataset.nodeId);
+    });
+}
 
 function plotMarkers() {
     // Clear existing camera trap markers
@@ -371,7 +404,7 @@ function renderCameraStatusList() {
         const signalHtml = getSignalBarsHtml(rssiVal, isThreat);
         
         item.innerHTML = `
-            <span class="camera-name">${nodeId}</span>
+            <span class="camera-name">${escapeHtml(nodeId)}</span>
             ${signalHtml}
         `;
         list.appendChild(item);
@@ -827,20 +860,20 @@ function addLogToTable(log, insertAtTop = false, showModal = false) {
         tr.className = "critical-row";
     }
 
-    const threatBadge = isHuman 
-        ? `<span class="badge badge-error">CRITICAL</span>` 
-        : `<span class="badge badge-success">${log.threatType}</span>`;
+    const threatBadge = isHuman
+        ? `<span class="badge badge-error">CRITICAL</span>`
+        : `<span class="badge badge-success">${escapeHtml(log.threatType)}</span>`;
 
     tr.innerHTML = `
-        <td style="font-weight: 500;">${log.timestamp}</td>
-        <td style="font-weight: 700; color: #3b82f6;">${log.nodeId}</td>
+        <td style="font-weight: 500;">${escapeHtml(log.timestamp)}</td>
+        <td style="font-weight: 700; color: #3b82f6;">${escapeHtml(log.nodeId)}</td>
         <td>${threatBadge}</td>
-        <td style="font-weight: 600;">${log.confidence}</td>
-        <td style="color: #9ca3af;">${log.locationName}</td>
-        <td style="font-family: monospace;">${log.rssi}</td>
+        <td style="font-weight: 600;">${escapeHtml(log.confidence)}</td>
+        <td style="color: #9ca3af;">${escapeHtml(log.locationName)}</td>
+        <td style="font-family: monospace;">${escapeHtml(log.rssi)}</td>
         <td class="action-cell">
             <span class="action-status" style="font-size: 11px; font-weight: 700; color: ${isHuman && log.action === 'PATROL_DISPATCHED' ? '#f87171' : '#9ca3af'};">
-                ${log.action}
+                ${escapeHtml(log.action)}
             </span>
             ${isHuman && log.action === 'PATROL_DISPATCHED' ? `
                 <button class="table-resolve-btn" title="Mark as Resolved">Resolve</button>
@@ -1387,7 +1420,10 @@ function updateNodeOnlineState(nodeId, isOnline) {
     }
 
     // Update the floating panel badge status
-    const badge = document.querySelector(`#status-item-${nodeId} .camera-status-badge`);
+    // CSS.escape guards against a node ID containing selector-breaking characters
+    // (e.g. a space or quote from a maliciously edited sensor_config.json) throwing
+    // an exception here and aborting the status update for every other camera trap.
+    const badge = document.querySelector(`#status-item-${CSS.escape(nodeId)} .camera-status-badge`);
     if (badge) {
         if (activeThreatNodes.has(nodeId)) {
             badge.textContent = "THREAT ACTIVE";
@@ -1541,11 +1577,11 @@ function renderCameraTrapsModal() {
         card.className = "modal-trap-card";
         card.innerHTML = `
             <div class="trap-card-header">
-                <span class="trap-card-title">${nodeId}</span>
+                <span class="trap-card-title">${escapeHtml(nodeId)}</span>
                 <span class="badge ${statusClass}">${statusText}</span>
             </div>
-            <div class="trap-card-location" style="font-size: 0.8rem; font-weight: 700; color: #f3f4f6; margin-top: 2px;">${info.name}</div>
-            <div class="trap-card-desc" style="font-size: 0.72rem; color: #9ca3af; line-height: 1.3; margin-top: 4px;">${info.description}</div>
+            <div class="trap-card-location" style="font-size: 0.8rem; font-weight: 700; color: #f3f4f6; margin-top: 2px;">${escapeHtml(info.name)}</div>
+            <div class="trap-card-desc" style="font-size: 0.72rem; color: #9ca3af; line-height: 1.3; margin-top: 4px;">${escapeHtml(info.description)}</div>
             <div class="trap-card-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;">
                 <div class="trap-card-stat" style="background-color: rgba(8, 12, 20, 0.4); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 4px; padding: 6px; display: flex; flex-direction: column;">
                     <span class="trap-card-stat-label" style="font-size: 0.55rem; color: #6b7280; text-transform: uppercase; font-weight: 700;">RSSI</span>
@@ -1561,8 +1597,8 @@ function renderCameraTrapsModal() {
                 </div>
             </div>
             <div class="trap-card-actions" style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; flex-wrap: wrap;">
-                <button class="modal-action-btn view-on-map-btn" data-id="${nodeId}" style="padding: 4px 8px; font-size: 0.68rem;">🗺️ View</button>
-                <button class="modal-action-btn config-btn" data-id="${nodeId}" style="padding: 4px 8px; font-size: 0.68rem;">⚙️ Config</button>
+                <button class="modal-action-btn view-on-map-btn" data-id="${escapeHtml(nodeId)}" style="padding: 4px 8px; font-size: 0.68rem;">🗺️ View</button>
+                <button class="modal-action-btn config-btn" data-id="${escapeHtml(nodeId)}" style="padding: 4px 8px; font-size: 0.68rem;">⚙️ Config</button>
             </div>
         `;
         
@@ -1982,17 +2018,17 @@ function renderIncidentHistoryTable(logs) {
             tr.className = "critical-row";
         }
 
-        const threatBadge = isHuman 
-            ? `<span class="badge badge-error">CRITICAL</span>` 
-            : `<span class="badge badge-success">${log.threatType}</span>`;
+        const threatBadge = isHuman
+            ? `<span class="badge badge-error">CRITICAL</span>`
+            : `<span class="badge badge-success">${escapeHtml(log.threatType)}</span>`;
 
         tr.innerHTML = `
-            <td style="font-weight: 500;">${log.timestamp}</td>
-            <td style="font-weight: 700; color: #3b82f6;">${log.nodeId}</td>
+            <td style="font-weight: 500;">${escapeHtml(log.timestamp)}</td>
+            <td style="font-weight: 700; color: #3b82f6;">${escapeHtml(log.nodeId)}</td>
             <td>${threatBadge}</td>
-            <td style="font-weight: 600;">${log.confidence}</td>
-            <td style="color: #9ca3af;">${log.locationName}</td>
-            <td style="font-weight: 700; font-size: 11px; color: ${log.action === 'PATROL_RESOLVED' ? '#9ca3af' : '#f87171'};">${log.action}</td>
+            <td style="font-weight: 600;">${escapeHtml(log.confidence)}</td>
+            <td style="color: #9ca3af;">${escapeHtml(log.locationName)}</td>
+            <td style="font-weight: 700; font-size: 11px; color: ${log.action === 'PATROL_RESOLVED' ? '#9ca3af' : '#f87171'};">${escapeHtml(log.action)}</td>
         `;
         
         tbody.appendChild(tr);
@@ -2144,6 +2180,9 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // 7. Initialize administrator acknowledgment controller
     initAcknowledgeController();
+
+    // 7b. Delegated handler for the "VIEW ALERT DETAILS" button inside map popups
+    initPopupThreatButtonController();
 
     // 8. Fetch active/online cameras to set initial LED states
     fetch("/active-cameras")

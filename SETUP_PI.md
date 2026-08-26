@@ -141,9 +141,13 @@ python3 edge_node/pir_sensor.py --watch 30
 
 ```bash
 python3 base_station/dashboard_server.py --host 0.0.0.0
+# หรือกำหนดรหัสผ่านเอง แทนการให้สุ่มใหม่ทุกครั้งที่ restart:
+python3 base_station/dashboard_server.py --host 0.0.0.0 --password "your-team-password"
 ```
 
-เปิด `http://<ip>:8080` — จะแสดง IP บน LAN ให้ตอนสตาร์ท
+เปิด `http://<ip>:8080` — จะแสดง IP บน LAN ให้ตอนสตาร์ท พร้อม username/password
+สำหรับ Basic Auth ที่ browser จะถามตอนเปิดหน้าเว็บครั้งแรก (บังคับใช้อัตโนมัติเมื่อ bind
+กับ `0.0.0.0` — ไม่ต้องตั้งค่าเพิ่มถ้ารันแค่ `--host 127.0.0.1` บนเครื่องเดียวกัน)
 
 ### ตั้ง field node บน Pi
 
@@ -218,7 +222,9 @@ sudo systemctl enable apnet-trap.service
 | PIR ทริกไม่หยุด | ลด sensitivity, เลี่ยงแดดส่องตรงและลมร้อน, เพิ่ม `--cooldown` |
 | `Cannot bind 127.0.0.1:5005` | มี receiver ตัวอื่นรันอยู่ — dashboard มี receiver ในตัว ใช้ `--no-receiver` |
 | Dashboard เปิดจากเครื่องอื่นไม่ได้ | ต้องรันด้วย `--host 0.0.0.0` |
+| Browser ขึ้น popup ขอ username/password | ปกติ — เกิดตอน bind `0.0.0.0` (ดูรหัสผ่านที่ console ตอนสตาร์ท หรือกำหนดเองด้วย `--password`) |
 | ตรวจเจอคนตลอด/ไม่เจอเลย | ดูว่าเป็น `backend='mock'` อยู่หรือเปล่า — ต้องใส่โมเดลจริง |
 
-> **ก่อนเอาขึ้นเครือข่ายที่ไม่ไว้ใจ:** dashboard ยังไม่มีระบบยืนยันตัวตน และเปิดรับทุก
-> interface — ดู FIX_PLAN.md กลุ่ม C (C1–C3) ซึ่งยังไม่ได้แก้
+> **ความปลอดภัย:** เมื่อรันด้วย `--host 0.0.0.0` ระบบจะบังคับ HTTP Basic Auth ให้อัตโนมัติ
+> (ดูรหัสผ่านที่ console ตอนสตาร์ท) แจกรหัสผ่านนี้เฉพาะทีม ranger เท่านั้น — ใครก็ตามที่รู้
+> รหัสผ่านจะเห็นพิกัดและภาพการตอบสนองของทีมได้แบบเรียลไทม์

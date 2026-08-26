@@ -73,8 +73,8 @@ case "$choice" in
         $PY run_demo.py
         ;;
     3)
-        echo -n -e "Bind address ${DIM}[0.0.0.0 = reachable on the LAN, 127.0.0.1 = local only]${NC}: "
-        read -r host; host="${host:-0.0.0.0}"
+        echo -n -e "Bind address ${DIM}[127.0.0.1 = local only, 0.0.0.0 = reachable on the LAN (needs a password)]${NC}: "
+        read -r host; host="${host:-127.0.0.1}"
         info "Dashboard on ${host}:8080..."
         $PY base_station/dashboard_server.py --host "$host"
         ;;

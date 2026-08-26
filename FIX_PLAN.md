@@ -1,6 +1,6 @@
 # AP-NET — แผนการแก้ไข (Fix Plan)
 
-สำรวจครั้งแรก 2026-08-26 · **แก้ไขเฟส 1–3 + YOLO จริง เมื่อ 2026-08-26**
+สำรวจครั้งแรก 2026-08-26 · **แก้ไขเฟส 1–3 + YOLO จริง เมื่อ 2026-08-26** · **แก้กลุ่ม C (ความปลอดภัย) เมื่อ 2026-08-26**
 
 ## สถานะปัจจุบัน
 
@@ -8,12 +8,18 @@
 | :--- | :--- | :--- |
 | A | Path ตายตัว — ระบบรันไม่ได้ | ✅ แก้แล้วทั้ง 3 ข้อ |
 | B | ตรรกะผิด / ข้อมูลเสียหาย | ✅ แก้แล้วทั้ง 7 ข้อ (เจอเพิ่ม 1 ข้อระหว่างแก้) |
-| C | ความปลอดภัยของ Dashboard | ⬜ **ยังไม่ได้แก้** — อยู่นอกขอบเขตที่เลือก |
+| C | ความปลอดภัยของ Dashboard | ✅ แก้แล้วทั้ง 3 ข้อ (เจอเพิ่ม 2 ข้อระหว่างแก้) |
 | D | โค้ดซ้ำซ้อน / โค้ดตาย | ✅ แก้แล้ว 5 ข้อ |
 | E | เอกสารกับโค้ดไม่ตรงกัน | 🔶 แก้บางส่วน (E2 ✅, E3 บางส่วน) |
 
-**เหลือค้าง 5 ข้อ:** C1, C2, C3 (ความปลอดภัย — ต้องทำก่อนเอา dashboard ขึ้นเครือข่ายที่ไม่ไว้ใจ),
+**เหลือค้าง 2 ข้อ**, ทั้งคู่เป็นงานเอกสารล้วน ไม่กระทบการทำงานของระบบ:
 E1 (Mermaid diagram พัง), E4 (mock images ไม่ใช่ภาพจริง)
+
+**บั๊กที่เจอเพิ่มระหว่างแก้กลุ่ม C** (ไม่ได้อยู่ในรายการสำรวจเดิม):
+- **onclick-breakout XSS** ในปุ่ม popup บนแผนที่ — รุนแรงกว่าที่บันทึกไว้เดิม เพราะ `escapeHtml()`
+  เฉย ๆ แก้ไม่ได้จริงสำหรับ inline event handler (ดูรายละเอียดใน C2)
+- **Path traversal ใน `/simulate-alert`** — `node_id` จาก request body ไหลตรงเข้าชื่อไฟล์
+  โดยไม่กรอง ทำให้เขียนไฟล์หลุดออกจาก `received_images/` ได้ (ดูรายละเอียดใน C3)
 
 ### ไฟล์ที่เพิ่มเข้ามา
 
@@ -196,12 +202,13 @@ Pi ที่เขียน SD การ์ดตอน garbage collect ก็�
 
 ---
 
-## กลุ่ม C — ความปลอดภัยของ Dashboard
+## กลุ่ม C — ความปลอดภัยของ Dashboard ✅ แก้แล้วทั้ง 3 ข้อ
 
-> บริบท: นี่เป็น demo บนเครื่องตัวเอง ความเสี่ยงจึงต่ำในตอนนี้
-> แต่ถ้าจะนำไปสาธิตที่หน่วยงานหรือวางบนเครือข่ายจริง ต้องแก้ทั้ง 3 ข้อก่อน
+> บริบทเดิม: นี่เป็น demo บนเครื่องตัวเอง ความเสี่ยงจึงต่ำในตอนนั้น
+> แต่ผู้ใช้มี Raspberry Pi 5 พร้อมใช้งานจริงแล้ว และ dashboard ต้องเปิดให้เข้าถึงจากเครื่องอื่น
+> บน LAN ได้ (ดู SETUP_PI.md) จึงแก้ทั้ง 3 ข้อก่อนเริ่มใช้งานจริง
 
-### ⬜ C1. ไม่มีการยืนยันตัวตน + เปิดรับทุก interface 🟠
+### ✅ C1. ไม่มีการยืนยันตัวตน + เปิดรับทุก interface 🟠
 
 `dashboard_server.py:660` ผูกกับ `("", 8080)` = ทุก network interface
 POST endpoint ทั้ง 3 ตัว (`/sensor-config`, `/resolve-alert`, `/simulate-alert`)
@@ -211,11 +218,21 @@ POST endpoint ทั้ง 3 ตัว (`/sensor-config`, `/resolve-alert`, `/si
 ใครก็ตามที่อยู่ในวง Wi-Fi เดียวกันสามารถย้ายพิกัดกล้อง ปิด alert
 หรือยิง alert ปลอมเข้าระบบได้
 
-**แนวทางแก้:** ผูกกับ `127.0.0.1` เป็นค่าเริ่มต้น, ลบ CORS wildcard ออก
-(หน้าเว็บถูกเสิร์ฟจาก origin เดียวกันอยู่แล้ว จึงไม่ต้องใช้), และเพิ่ม shared-secret token
-ให้ POST หากต้องเปิดออกนอกเครื่องจริง ๆ
+**แก้แล้ว:**
+- `--host` ค่าเริ่มต้นเปลี่ยนเป็น `127.0.0.1` (จากเดิม `0.0.0.0`) — ปลอดภัยโดยไม่ต้องทำอะไรเพิ่ม
+- เมื่อ bind กับ interface อื่นที่ไม่ใช่ loopback ระบบจะ**บังคับ HTTP Basic Auth**
+  โดยอัตโนมัติ (`configure_auth()` + `_require_auth()` ใน `dashboard_server.py`)
+  - ไม่ใส่ `--password` → สุ่มรหัสผ่านด้วย `secrets.token_urlsafe(12)` แล้วพิมพ์ที่ console ตอนสตาร์ท
+  - ใส่ `--password <fixed>` เพื่อกำหนดรหัสผ่านคงที่ (สำหรับใช้งานจริงที่ต้องรอด restart)
+  - `--no-auth` เปิดไว้สำหรับเครือข่ายทดสอบที่แยกออกมาต่างหากเท่านั้น
+- เลือกใช้ **Basic Auth** แทน custom token เพราะเบราว์เซอร์จัดการ challenge/response เองทั้งหมด
+  (prompt ครั้งเดียว แล้วแนบ credential ให้ทุก request ในหลังจากนั้นอัตโนมัติ — รวมถึง
+  `<img>`, `fetch()`, และ `EventSource`) จึงไม่ต้องแก้ `app.js` เลยสักบรรทัด
+- ทดสอบแล้วครบ: GET/POST ไม่มี credential → 401, credential ผิด → 401, ถูก → 200,
+  รูปภาพและ SSE stream ก็ถูกป้องกันด้วย (ไม่ใช่แค่ endpoint POST) — payload คลื่นวิทยุ
+  (`field_node.py` ผ่าน UDP พอร์ต 5005) ไม่เกี่ยวข้องกับ auth ชุดนี้เลย เพราะเป็นคนละโปรโตคอล
 
-### ⬜ C2. XSS ผ่าน `sensor_config.json` 🟠
+### ✅ C2. XSS ผ่าน `sensor_config.json` 🟠
 
 `app.js:829, 1478, 1925` ประกอบ `innerHTML` จากค่าที่ไม่ผ่าน escape:
 
@@ -223,18 +240,50 @@ POST endpoint ทั้ง 3 ตัว (`/sensor-config`, `/resolve-alert`, `/si
 <td style="color: #9ca3af;">${log.locationName}</td>
 ```
 
-`locationName` มาจาก `sensor_config.json` ซึ่งเขียนได้ผ่าน `POST /sensor-config` แบบไม่ต้อง auth (C1)
+`locationName` มาจาก `sensor_config.json` ซึ่งเขียนได้ผ่าน `POST /sensor-config`
 ตั้งชื่อกล้องเป็น `<img src=x onerror=...>` แล้ว JS จะทำงานในหน้า dashboard ของ ranger ทุกคน
 
-**แนวทางแก้:** ใช้ `textContent` สำหรับข้อความ หรือเขียนฟังก์ชัน `escapeHtml()`
-ครอบทุกค่าที่มาจากภายนอกก่อนใส่ template string
+**แก้แล้ว:** เพิ่มฟังก์ชัน `escapeHtml()` ใน `app.js` ครอบทุกจุดที่ประกอบ `innerHTML`
+จากข้อมูลภายนอก — `renderCameraStatusList`, `addLogToTable`, incident-history table row,
+`renderCameraTrapsModal`, และ `getPopupContent` (popup บนแผนที่)
 
-### ⬜ C3. `/simulate-alert` สร้างไฟล์ได้ไม่จำกัด 🟡
+พบจุดที่รุนแรงกว่าที่บันทึกไว้เดิมระหว่างแก้: ปุ่ม "VIEW ALERT DETAILS" ใน popup ใช้
+`onclick="viewActiveThreat('${nodeId}')"` — เป็น **inline event handler ที่ใส่ค่าดิบเข้าไปในโค้ด JS**
+ซึ่ง `escapeHtml()` เฉย ๆ **แก้ไม่ได้จริง**: เบราว์เซอร์จะ decode HTML entity ในค่าของ attribute
+ก่อนส่งต่อให้ JS parser เสมอ ดังนั้น `&#39;` ที่ escape ไว้จะกลับเป็น `'` ก่อนถูกรันเป็นโค้ด
+ทำให้ attacker ยังคง break out ของ string literal ได้อยู่ดีด้วย payload เช่น
+`x'); alert(document.cookie); //` แก้โดยตัด inline `onclick` ทิ้งทั้งหมด เปลี่ยนเป็น
+`data-node-id` + delegated `addEventListener` แทน (แพตเทิร์นเดียวกับปุ่มอื่นในไฟล์นี้อยู่แล้ว)
+ซึ่งไม่มีการแปลงค่าเป็น HTML/JS source text เลยตลอดทาง — ปลอดภัยโดยไม่ขึ้นกับ encoding
+
+เพิ่มการป้องกันแบบเดียวกันให้ `updateNodeOnlineState()` ด้วย: `document.querySelector`
+ที่ประกอบ CSS selector จาก `nodeId` ตรง ๆ อาจโยน exception ถ้าเจอ node ID ที่มีอักขระพิเศษ
+(ไม่ใช่ XSS แต่ทำให้สถานะกล้องตัวอื่นค้างได้) แก้ด้วย `CSS.escape()`
+
+ยืนยันด้วยการทดสอบ string-level ทั้ง payload แบบ `<img onerror>` และแบบ quote-breakout
+ว่าถูก neutralize ถูกต้องทั้งสองแบบ
+
+### ✅ C3. `/simulate-alert` สร้างไฟล์ได้ไม่จำกัด 🟡
 
 `dashboard_server.py:297-340` คัดลอก `seed_human.png` เป็นไฟล์ใหม่ทุกครั้งที่ถูกเรียก
 ไม่มี rate limit ไม่มีการล้าง — เรียกถี่ ๆ ก็ถมดิสก์ได้
 
-**แนวทางแก้:** ใส่ rate limit (เช่น 1 ครั้ง/วินาที) และเก็บภาพ simulate ไว้ไม่เกิน N ไฟล์ล่าสุด
+**แก้แล้ว:**
+- Rate limit ที่ 1 ครั้ง/วินาที (`SIMULATE_MIN_INTERVAL_S`) คืน `429 Too Many Requests`
+  พร้อม header `Retry-After` เมื่อเรียกถี่เกินไป — ทดสอบด้วยการยิง 3 request พร้อมกันจริง
+  (ไม่ใช่ทีละตัว) ยืนยันว่ามีแค่ 1 ตัวผ่าน อีก 2 ตัวได้ 429
+- เก็บภาพ `simulated_*.png` ไว้ไม่เกิน `SIMULATE_MAX_IMAGES` = 50 ไฟล์ล่าสุด
+  (`prune_simulated_images()`) ลบไฟล์เก่าสุดทิ้งเมื่อเกิน ไม่แตะไฟล์ประเภทอื่น
+  ทดสอบแบบแยกด้วยไฟล์ mock 60 ไฟล์ ยืนยันว่าเก็บ 50 ไฟล์ใหม่สุดถูกต้อง
+
+พบช่องโหว่ที่ไม่ได้บันทึกไว้เดิมระหว่างแก้จุดนี้: `node_id` จาก request body ถูกใส่ตรง ๆ
+ลงในชื่อไฟล์ (`f"simulated_{node_name...}_{stamp}.png"`) แล้วส่งต่อให้ `os.path.join()`
+โดยไม่ตรวจสอบ — ส่ง `{"node_id": "../../../../tmp/pwned"}` เข้าไปจะทำให้ `shutil.copy()`
+เขียนไฟล์หลุดออกจาก `received_images/` ไปที่ไหนก็ได้ที่โปรเซสเซิร์ฟเวอร์มีสิทธิ์เขียน
+(รวมถึงเขียนทับ `dashboard_static/index.html` ได้ถ้าเดา relative path ถูก = persistent XSS)
+แก้ด้วย `safe_filename_component()` กรองเหลือแค่ `[A-Za-z0-9_-]` ก่อนประกอบชื่อไฟล์
+(ค่า `node_id` ใน metadata ที่แสดงผลจริงยังคงเป็นค่าดิบเดิม ปลอดภัยอยู่แล้วจาก C2)
+ทดสอบยิง payload traversal จริงแล้วยืนยันว่าไฟล์ไม่หลุดออกนอก `received_images/`
 
 ---
 
@@ -373,11 +422,10 @@ Snapshot Serengeti, Caltech Camera Traps หรือ LILA BC ซึ่งเป
 
 ## สิ่งที่เหลือทำ
 
-**ก่อนเอา dashboard ขึ้นเครือข่ายที่คนอื่นเข้าถึงได้ — กลุ่ม C**
-C1 (ไม่มี auth + เปิดทุก interface) → C2 (XSS ผ่านชื่อกล้อง) → C3 (จำกัด /simulate-alert)
-
-ตอนนี้ `dashboard_server.py` มี `--host` แล้ว ใช้ `--host 127.0.0.1` จะปลอดภัยกว่า
-แต่ถ้าต้องเปิดดูจากเครื่องอื่น (ซึ่งเป็นกรณีใช้งานจริงบน Pi) ยังไม่มีอะไรกั้น
+กลุ่ม C แก้ครบแล้ว — สรุปพฤติกรรมปัจจุบัน: `dashboard_server.py` ค่าเริ่มต้น
+bind `127.0.0.1` (ปลอดภัยโดยไม่ต้องทำอะไร) ถ้าใช้ `--host 0.0.0.0` เพื่อเปิดดูจากเครื่องอื่น
+บน LAN (กรณีใช้งานจริงบน Pi ตาม SETUP_PI.md) ระบบจะบังคับ HTTP Basic Auth ให้อัตโนมัติ
+พร้อมสุ่มรหัสผ่านและพิมพ์ที่ console หรือกำหนดเองด้วย `--password`
 
 **เก็บงานเอกสาร**
 E1 (Mermaid fence ปิดผิดที่ ทำให้ไดอะแกรมแสดงแค่ส่วนแรก) ·

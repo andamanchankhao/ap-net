@@ -134,16 +134,39 @@ copy-pasted across four files and the copies drifted.
 - Frontend is plain JS, no bundler, no framework, no tests. Edit `app.js` directly.
 - Leaflet and Google Fonts load from CDNs, so the dashboard needs internet.
 
+## Dashboard security
+
+`dashboard_server.py` defaults to `--host 127.0.0.1`. Binding anywhere else
+(`--host 0.0.0.0`, needed to view it from another machine on the LAN - e.g. a Pi 5 field
+node reaching this as its base station) automatically requires HTTP Basic Auth: a
+password is auto-generated and printed at startup, or set a fixed one with `--password`.
+The browser handles the challenge natively, including on images, `fetch()` and the
+`/events` SSE stream - nothing in `app.js` special-cases auth. `--no-auth` exists only for
+an isolated test network.
+
+`app.js` escapes every server-sourced string before it goes into `innerHTML`
+(`escapeHtml()`), since `sensor_config.json` and `POST /simulate-alert`'s `node_id` are
+both attacker-writable. One spot needed more than escaping: a "view alert" button used to
+build an inline `onclick="viewActiveThreat('${nodeId}')"` handler, and HTML-escaping alone
+does not close that hole - the browser HTML-decodes an attribute's value before handing it
+to the JS parser, so an escaped `'` becomes a real one again right before execution. It's
+wired through `data-node-id` + a delegated `addEventListener` instead, which never turns
+the value into JS source text at all.
+
+`/simulate-alert` rate-limits to `SIMULATE_MIN_INTERVAL_S` (429 + `Retry-After` past that),
+caps stored images at `SIMULATE_MAX_IMAGES` via `prune_simulated_images()`, and sanitises
+`node_id` through `safe_filename_component()` before it can become part of a path - an
+unfiltered `node_id` like `"../../../../tmp/x"` used to let the seed-image copy escape
+`received_images/` entirely.
+
 ## Known gaps
 
-`FIX_PLAN.md` tracks all findings with status markers. Still open:
+`FIX_PLAN.md` tracks all findings with status markers. Still open, both documentation-only:
 
-- **Group C (security)** — the dashboard has no authentication, binds all interfaces by
-  default, and builds table rows with `innerHTML` from server-writable config (XSS).
-  Address before exposing it on any untrusted network.
 - **E1** — the Mermaid diagram in `Planning.md` closes its code fence early, so only the
   first subgraph renders.
 - **E4** — `mock_images/` holds synthetic vector art, useless for evaluating detection
   accuracy. Real camera-trap imagery is needed for that.
-- **No git repository and no pytest suite.** `.gitignore` is ready; `git init` is the
-  first thing to do. `lora_protocol.py` is the natural place to start testing.
+
+Git is initialized; there is no pytest suite yet. `lora_protocol.py` is the natural place
+to start one.
