@@ -16,7 +16,13 @@ Pillow>=10.0.0
 # ONNX Runtime: the recommended inference backend on a Pi 5 (Planning.md 6.2).
 # aarch64 wheels are published, so this is a normal pip install.
 onnxruntime>=1.17.0
-numpy>=1.24.0
+
+# Pinned <2: apt's python3-picamera2 (and its simplejpeg dependency) is compiled
+# against Debian Bookworm's numpy 1.24 ABI. An unpinned `numpy>=1.24.0` lets
+# opencv-python/onnxruntime pull numpy 2.x into the venv, which shadows the apt
+# copy (this venv uses --system-site-packages) and breaks picamera2 at import
+# time with "numpy.dtype size changed, may indicate binary incompatibility."
+numpy>=1.24.0,<2
 
 # Only needed for the live preview window (edge_node/capture_webcam.py).
 # A headless trap running field_node.py does not need it.

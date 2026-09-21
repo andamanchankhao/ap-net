@@ -219,6 +219,7 @@ sudo systemctl enable apnet-trap.service
 | :--- | :--- |
 | `No camera backend available` | `sudo apt install python3-picamera2` แล้วสร้าง venv ใหม่ด้วย `--system-site-packages` |
 | `No module named 'lgpio'` | `sudo apt install python3-lgpio` (อย่าใช้ pip) |
+| `numpy.dtype size changed, may indicate binary incompatibility` ตอนเช็คกล้อง | pip ดึง numpy 2.x มาทับของ apt ที่ picamera2 ต้องใช้ — `pip uninstall -y numpy` แล้วปล่อยให้ venv (`--system-site-packages`) ใช้ numpy 1.24 ของ apt แทน (`requirements-pi.txt` ปักหมุด `numpy<2` ไว้แล้วกันไม่ให้เกิดซ้ำ) |
 | PIR ทริกไม่หยุด | ลด sensitivity, เลี่ยงแดดส่องตรงและลมร้อน, เพิ่ม `--cooldown` |
 | `Cannot bind 127.0.0.1:5005` | มี receiver ตัวอื่นรันอยู่ — dashboard มี receiver ในตัว ใช้ `--no-receiver` |
 | Dashboard เปิดจากเครื่องอื่นไม่ได้ | ต้องรันด้วย `--host 0.0.0.0` |
