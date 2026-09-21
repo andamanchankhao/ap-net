@@ -12,14 +12,16 @@ import argparse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from paths import (RECEIVED_IMAGES_DIR, SENSOR_CONFIG, INCIDENT_STORE, ALERT_METADATA,
-                   BASE_STATION_HOST, BASE_STATION_PORT, SENDER_HOST, SENDER_PORT)
+                   BASE_STATION_HOST, BASE_STATION_PORT)
 from receiver_runtime import run_receiver, make_socket
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="LoRa Base Station Receiver Emulator")
+    parser.add_argument("--host", default=BASE_STATION_HOST,
+                        help="Address to listen on. 0.0.0.0 accepts a field node on another "
+                             "machine (e.g. a Pi 5 on the LAN).")
     parser.add_argument("--port", type=int, default=BASE_STATION_PORT, help="Port to listen on")
-    parser.add_argument("--sender-port", type=int, default=SENDER_PORT, help="Port to send BLOCKNACKs to")
     parser.add_argument("--loss-rate", type=float, default=0.15, help="Simulated packet loss (0.0-1.0)")
     parser.add_argument("--burst-timeout", type=float, default=0.5, help="Idle seconds that end a burst")
     parser.add_argument("--output-dir", default=RECEIVED_IMAGES_DIR, help="Where to save reassembled images")
@@ -27,11 +29,11 @@ def parse_args():
 
 
 def main_logic(args):
-    sock = make_socket(BASE_STATION_HOST, args.port)
+    sock = make_socket(args.host, args.port)
     if sock is None:
         return 1
 
-    print(f"Base Station Receiver listening on {BASE_STATION_HOST}:{args.port}")
+    print(f"Base Station Receiver listening on {args.host}:{args.port}")
     try:
         run_receiver(
             sock=sock,
@@ -39,7 +41,6 @@ def main_logic(args):
             config_path=SENSOR_CONFIG,
             store_path=INCIDENT_STORE,
             alert_path=ALERT_METADATA,
-            sender_addr=(SENDER_HOST, args.sender_port),
             loss_rate=args.loss_rate,
             burst_timeout=args.burst_timeout,
         )

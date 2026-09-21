@@ -153,6 +153,12 @@ to the JS parser, so an escaped `'` becomes a real one again right before execut
 wired through `data-node-id` + a delegated `addEventListener` instead, which never turns
 the value into JS source text at all.
 
+The embedded UDP receiver binds the same address as `--host`, so `--host 0.0.0.0` also
+opens port 5005 to the LAN - that is what lets a Pi field node reach it. The radio link
+has no authentication (neither does the real LoRa design), so anyone on that network can
+inject fragments and create an incident. Replies (SUCCESS/BLOCKNACK) go back to the
+address the burst came from, not a fixed port.
+
 `/simulate-alert` rate-limits to `SIMULATE_MIN_INTERVAL_S` (429 + `Retry-After` past that),
 caps stored images at `SIMULATE_MAX_IMAGES` via `prune_simulated_images()`, and sanitises
 `node_id` through `safe_filename_component()` before it can become part of a path - an

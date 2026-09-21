@@ -223,6 +223,7 @@ sudo systemctl enable apnet-trap.service
 | PIR ทริกไม่หยุด | ลด sensitivity, เลี่ยงแดดส่องตรงและลมร้อน, เพิ่ม `--cooldown` |
 | `Cannot bind 127.0.0.1:5005` | มี receiver ตัวอื่นรันอยู่ — dashboard มี receiver ในตัว ใช้ `--no-receiver` |
 | Dashboard เปิดจากเครื่องอื่นไม่ได้ | ต้องรันด้วย `--host 0.0.0.0` |
+| Pi ขึ้น `[RADIO] No response after 10 s. Giving up.` | dashboard ต้องรันด้วย `--host 0.0.0.0` — บรรทัด `LoRa RX` ตอนสตาร์ทต้องขึ้น `0.0.0.0:5005` ไม่ใช่ `127.0.0.1:5005` ถ้าถูกแล้วยังไม่ได้ ให้ `ping` IP ของ Mac จาก Pi: ไม่ตอบ = Wi-Fi เปิด client isolation (มักเจอกับ Wi-Fi มหาลัย) ให้ใช้ hotspot มือถือแทน |
 | Browser ขึ้น popup ขอ username/password | ปกติ — เกิดตอน bind `0.0.0.0` (ดูรหัสผ่านที่ console ตอนสตาร์ท หรือกำหนดเองด้วย `--password`) |
 | ตรวจเจอคนตลอด/ไม่เจอเลย | ดูว่าเป็น `backend='mock'` อยู่หรือเปล่า — ต้องใส่โมเดลจริง |
 

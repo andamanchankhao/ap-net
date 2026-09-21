@@ -42,7 +42,6 @@ MOCK_SD_CARD_DEER = os.path.join(SD_CARD_DIR, "wildlife_deer_01.jpg")
 # --- Network defaults --------------------------------------------------------
 BASE_STATION_HOST = "127.0.0.1"
 BASE_STATION_PORT = 5005
-SENDER_HOST = "127.0.0.1"
 SENDER_PORT = 5006
 DASHBOARD_PORT = 8080
 

@@ -118,7 +118,7 @@ def persist_alert(metadata, output_dir, store_path, alert_path):
 # Receive loop
 # =============================================================================
 def run_receiver(sock, output_dir, config_path, store_path, alert_path,
-                 sender_addr, loss_rate=0.15, burst_timeout=0.5,
+                 loss_rate=0.15, burst_timeout=0.5,
                  on_alert=None, on_heartbeat=None, log=print,
                  stop_event=None, loss_seed=42):
     """
@@ -127,12 +127,18 @@ def run_receiver(sock, output_dir, config_path, store_path, alert_path,
     `on_alert(metadata)` fires after a complete image is reassembled and persisted;
     `on_heartbeat(node_id)` fires for each keep-alive frame.
 
+    SUCCESS/BLOCKNACK frames go back to whichever address the burst's fragments came
+    from. They used to go to a fixed 127.0.0.1:5006, so a trap on another machine (a
+    Pi 5 reaching a laptop base station) never heard its ACK and gave up after every
+    transmission.
+
     Packet loss uses a private random.Random instance rather than random.seed() so it
     stays reproducible without hijacking the process-wide RNG that the dashboard's
     telemetry simulation depends on (FIX_PLAN.md D4).
     """
     loss_rng = random.Random(loss_seed)
     session = lp.ReassemblySession()
+    peer = None
 
     log(f"[RECEIVER] Listening. Simulated packet loss: {loss_rate:.1%}")
 
@@ -140,11 +146,11 @@ def run_receiver(sock, output_dir, config_path, store_path, alert_path,
         sock.settimeout(burst_timeout if session.active else 1.0)
 
         try:
-            data, _addr = sock.recvfrom(2048)
+            data, addr = sock.recvfrom(2048)
         except socket.timeout:
             if not session.active:
                 continue
-            _evaluate_burst(session, sock, sender_addr, output_dir, config_path,
+            _evaluate_burst(session, sock, peer, output_dir, config_path,
                             store_path, alert_path, on_alert, log)
             continue
         except OSError as e:
@@ -169,12 +175,15 @@ def run_receiver(sock, output_dir, config_path, store_path, alert_path,
             log(f"  [RECEIVER] Discarded frame ({status})")
             continue
 
+        # Heartbeats come from a separate throwaway socket, so only fragments set this
+        peer = addr
+
         received, total = session.progress()
         if received == 1:
             log(f"[RECEIVER] Incoming transmission: expecting {total} fragments")
 
 
-def _evaluate_burst(session, sock, sender_addr, output_dir, config_path,
+def _evaluate_burst(session, sock, peer, output_dir, config_path,
                     store_path, alert_path, on_alert, log):
     """End-of-burst handling: reassemble if complete, otherwise request the gaps."""
     received, total = session.progress()
@@ -199,7 +208,7 @@ def _evaluate_burst(session, sock, sender_addr, output_dir, config_path,
             # retransmitting an image the base station had already decoded perfectly.
             # Everything needed for the ACK (a complete, decodable payload) is known here,
             # so disk latency no longer sits inside the protocol's timing budget.
-            _send(sock, lp.make_blocknack(node_id, trans_id, lp.STATUS_SUCCESS, []), sender_addr, log)
+            _send(sock, lp.make_blocknack(node_id, trans_id, lp.STATUS_SUCCESS, []), peer, log)
             log(f"[RECEIVER] SUCCESS sent ({len(webp_bytes)} B decoded).")
             session.reset()
 
@@ -217,7 +226,7 @@ def _evaluate_burst(session, sock, sender_addr, output_dir, config_path,
 
     log(f"[RECEIVER] Missing {len(missing)} fragments. Sending BLOCKNACK...")
     _send(sock, lp.make_blocknack(session.node_id, session.trans_id, lp.STATUS_NACK, missing),
-          sender_addr, log)
+          peer, log)
 
 
 def _send(sock, packet, addr, log):

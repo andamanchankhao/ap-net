@@ -133,7 +133,6 @@ def test_true_positive():
             config_path=SENSOR_CONFIG,
             store_path=INCIDENT_STORE,
             alert_path=ALERT_METADATA,
-            sender_addr=("queue", 0),
             loss_rate=SIMULATED_LOSS_RATE,
             burst_timeout=0.2,
             stop_event=stop_event,

@@ -13,10 +13,11 @@ edge_node/compressed_preview.webp
 base_station/received_images/
 *.log
 
-# Models are large binaries; export them per machine (see SETUP_PI.md)
-edge_node/models/*.onnx
-edge_node/models/*.tflite
-edge_node/models/*.pt
+# Models are large binaries; export them per machine (see SETUP_PI.md).
+# Matched anywhere: `yolo export` writes into whatever directory it runs from.
+*.onnx
+*.tflite
+*.pt
 
 # OS
 .DS_Store

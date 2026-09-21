@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from paths import (STATIC_DIR, RECEIVED_IMAGES_DIR, SENSOR_CONFIG, INCIDENT_STORE,
                    ALERT_METADATA, MOCK_IMAGES_DIR, BASE_STATION_HOST, BASE_STATION_PORT,
-                   SENDER_HOST, SENDER_PORT, DASHBOARD_PORT, ensure_dir)
+                   DASHBOARD_PORT, ensure_dir)
 import incident_store
 from receiver_runtime import run_receiver, make_socket
 
@@ -480,8 +480,11 @@ class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 # =============================================================================
 # Background receiver
 # =============================================================================
-def lora_receiver_thread_func(stop_event, loss_rate):
-    sock = make_socket(BASE_STATION_HOST, BASE_STATION_PORT, log=lambda m: print(f"[LORA] {m}"))
+def lora_receiver_thread_func(stop_event, loss_rate, host):
+    # The radio listens wherever the dashboard does. It used to be pinned to 127.0.0.1
+    # even under --host 0.0.0.0, so a Pi field node aimed at this machine's LAN address
+    # was sending into a port nothing was listening on.
+    sock = make_socket(host, BASE_STATION_PORT, log=lambda m: print(f"[LORA] {m}"))
     if sock is None:
         print("[LORA] Receiver disabled. Dashboard will still serve simulated alerts.")
         return
@@ -501,7 +504,6 @@ def lora_receiver_thread_func(stop_event, loss_rate):
             config_path=SENSOR_CONFIG,
             store_path=INCIDENT_STORE,
             alert_path=ALERT_METADATA,
-            sender_addr=(SENDER_HOST, SENDER_PORT),
             loss_rate=loss_rate,
             on_alert=on_alert,
             on_heartbeat=on_heartbeat,
@@ -565,6 +567,13 @@ def reset_received_images():
 
 
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+def radio_host(host):
+    """The IPv4 address the UDP receiver binds for a given --host."""
+    if host in LOOPBACK_HOSTS:
+        return BASE_STATION_HOST
+    return host or "0.0.0.0"
 
 
 def parse_args():
@@ -635,7 +644,8 @@ def main():
     stop_event = threading.Event()
     if not args.no_receiver:
         threading.Thread(target=lora_receiver_thread_func,
-                         args=(stop_event, args.loss_rate), daemon=True).start()
+                         args=(stop_event, args.loss_rate, radio_host(args.host)),
+                         daemon=True).start()
 
     httpd = ThreadingHTTPServer((args.host, args.port), DashboardHTTPHandler)
 
@@ -661,7 +671,7 @@ def main():
         else:
             print("  AUTH        : *** DISABLED (--no-auth) — anyone on this network can")
             print("                read alerts, move camera traps, or forge intrusions. ***")
-    print(f"  LoRa RX     : {'disabled' if args.no_receiver else f'{BASE_STATION_HOST}:{BASE_STATION_PORT}'}")
+    print(f"  LoRa RX     : {'disabled' if args.no_receiver else f'{radio_host(args.host)}:{BASE_STATION_PORT} (UDP)'}")
     print(f"  Incidents   : {existing} in history")
     print("  Ctrl+C to stop.")
     print("=" * 80)
