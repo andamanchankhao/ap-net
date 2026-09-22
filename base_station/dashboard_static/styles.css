@@ -546,7 +546,9 @@ body {
 .alert-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    /* contain, not cover: the payload is a person crop of any shape (tall for someone
+       standing, wide for a group), and cover would cut off the evidence at the edges */
+    object-fit: contain;
     image-rendering: pixelated;
     transition: opacity 0.5s ease;
 }

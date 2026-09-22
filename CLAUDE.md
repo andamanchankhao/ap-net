@@ -111,6 +111,11 @@ copy-pasted across four files and the copies drifted.
 - **`edge_node.py` exit codes are a contract**: `0` human detected, `1` no threat,
   `2` error. `run_demo.sh` and `run_demo.py` branch on them. Never collapse 1 and 2 —
   that conflation once made crashes report as passing tests.
+- **The transmitted image is a person crop.** `process_image(..., boxes)` crops to the
+  union of the detector's boxes (+10% padding), then fits the long side to 256 px without
+  enlarging. No boxes (mock detector, a forced alert) means the whole frame, still at its
+  own aspect ratio. Planning.md §7 says 128x128 of the full frame; that was unreadable on
+  a real 1920x1080 capture. The dashboard uses `object-fit: contain` so no edge is cut.
 - **The mock detector announces itself.** When no model is found, `detect_human()` falls
   back to matching the filename and prints a loud warning; `allow_mock=False` makes it
   raise instead. Never let a mock verdict be presented as real evidence.

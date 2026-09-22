@@ -175,7 +175,7 @@ def run_cycle(camera, args, base_addr, log=print):
         log(f"       person {score:.2f} at ({x1:.0f},{y1:.0f})-({x2:.0f},{y2:.0f})")
 
     try:
-        pipeline.process_image(capture_path, COMPRESSED_PAYLOAD, COMPRESSED_PREVIEW)
+        pipeline.process_image(capture_path, COMPRESSED_PAYLOAD, COMPRESSED_PREVIEW, result.boxes)
         with open(COMPRESSED_PAYLOAD, encoding="utf-8") as f:
             payload = f.read()
     except Exception as e:

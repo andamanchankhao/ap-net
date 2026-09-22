@@ -85,11 +85,11 @@ def draw_overlay(cv2, frame, boxes, confidence, alerting, detecting, fps, backen
     return frame
 
 
-def handle_alert(frame_path, args, log=print):
+def handle_alert(frame_path, args, boxes=None, log=print):
     """Compress the frame and, if asked, push it to the base station."""
     log(f"[PREVIEW] Alert frame saved: {frame_path}")
     try:
-        pipeline.process_image(frame_path, COMPRESSED_PAYLOAD, COMPRESSED_PREVIEW)
+        pipeline.process_image(frame_path, COMPRESSED_PAYLOAD, COMPRESSED_PREVIEW, boxes)
     except Exception as e:
         log(f"[PREVIEW] Compression failed: {e}")
         return
@@ -180,7 +180,8 @@ def main():
                     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     alert_path = os.path.join(CAPTURE_DIR, f"human_alert_{stamp}.jpg")
                     cv2.imwrite(alert_path, frame)
-                    handle_alert(alert_path, args)
+                    # Same frame the boxes were just detected on, so they line up
+                    handle_alert(alert_path, args, boxes)
 
             display = draw_overlay(cv2, frame.copy(), boxes, confidence,
                                    now < alerting_until, detecting, fps, backend)
